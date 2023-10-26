@@ -2,6 +2,7 @@ package pizza.xyz.befake.data
 
 import pizza.xyz.befake.model.dtos.LoginRequestDTO
 import pizza.xyz.befake.model.dtos.LoginResultDTO
+import pizza.xyz.befake.model.dtos.RefreshTokenRequestDTO
 import pizza.xyz.befake.model.dtos.VerifyOTPRequestDTO
 import pizza.xyz.befake.model.dtos.VerifyOTPResponseDTO
 import retrofit2.http.Body
@@ -17,6 +18,10 @@ interface LoginService {
 
     suspend fun verifyCode(
         verifyOTPRequestDTO: VerifyOTPRequestDTO
+    ): Result<VerifyOTPResponseDTO>
+
+    suspend fun refreshToken(
+        refreshTokenRequestDTO: RefreshTokenRequestDTO
     ): Result<VerifyOTPResponseDTO>
 }
 
@@ -39,6 +44,12 @@ class LoginServiceImpl @Inject constructor(
         return@runCatching loginService.verifyCode(verifyOTPRequestDTO)
     }
 
+    override suspend fun refreshToken(
+        refreshTokenRequestDTO: RefreshTokenRequestDTO
+    ): Result<VerifyOTPResponseDTO> = runCatching {
+        return@runCatching loginService.refreshToken(refreshTokenRequestDTO)
+    }
+
     interface LoginAPI {
 
         @POST("/login/send-code")
@@ -49,6 +60,11 @@ class LoginServiceImpl @Inject constructor(
         @POST("/login/verify")
         suspend fun verifyCode(
             @Body verifyOTPRequestDTO: VerifyOTPRequestDTO
+        ): VerifyOTPResponseDTO
+
+        @POST("/login/refresh")
+        suspend fun refreshToken(
+            @Body refreshTokenRequestDTO: RefreshTokenRequestDTO
         ): VerifyOTPResponseDTO
     }
 }
