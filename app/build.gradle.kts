@@ -55,9 +55,15 @@ android {
 
 dependencies {
 
+    val room_version = "2.6.0"
+
+    implementation("androidx.room:room-runtime:$room_version")
+    annotationProcessor("androidx.room:room-compiler:$room_version")
+
     kapt("com.google.dagger:hilt-android-compiler:2.44")
     kapt("androidx.hilt:hilt-compiler:1.0.0")
 
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("androidx.hilt:hilt-work:1.0.0")

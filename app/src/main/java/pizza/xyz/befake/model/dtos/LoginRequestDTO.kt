@@ -1,4 +1,4 @@
-package pizza.xyz.befake.model
+package pizza.xyz.befake.model.dtos
 
 import com.google.gson.annotations.SerializedName
 
