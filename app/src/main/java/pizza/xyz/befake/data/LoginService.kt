@@ -1,10 +1,14 @@
 package pizza.xyz.befake.data
 
-import pizza.xyz.befake.model.dtos.LoginRequestDTO
-import pizza.xyz.befake.model.dtos.LoginResultDTO
-import pizza.xyz.befake.model.dtos.RefreshTokenRequestDTO
-import pizza.xyz.befake.model.dtos.VerifyOTPRequestDTO
-import pizza.xyz.befake.model.dtos.VerifyOTPResponseDTO
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import kotlinx.coroutines.flow.first
+import pizza.xyz.befake.Utils
+import pizza.xyz.befake.model.dtos.login.LoginRequestDTO
+import pizza.xyz.befake.model.dtos.login.LoginResultDTO
+import pizza.xyz.befake.model.dtos.refresh.RefreshTokenRequestDTO
+import pizza.xyz.befake.model.dtos.verify.VerifyOTPRequestDTO
+import pizza.xyz.befake.model.dtos.verify.VerifyOTPResponseDTO
 import retrofit2.http.Body
 import retrofit2.http.POST
 import javax.inject.Inject
@@ -20,22 +24,19 @@ interface LoginService {
         verifyOTPRequestDTO: VerifyOTPRequestDTO
     ): Result<VerifyOTPResponseDTO>
 
-    suspend fun refreshToken(
-        refreshTokenRequestDTO: RefreshTokenRequestDTO
-    ): Result<VerifyOTPResponseDTO>
+    suspend fun refreshToken(): Result<VerifyOTPResponseDTO>
 }
 
 @Singleton
 class LoginServiceImpl @Inject constructor(
-    private val loginService: LoginAPI
+    private val loginService: LoginAPI,
+    private val dataStore: DataStore<Preferences>
 ): LoginService {
 
     override suspend fun sendCode(
         body: LoginRequestDTO
     ): Result<LoginResultDTO> = runCatching {
-        val test = loginService.sendCode(body)
-        println("test: $test")
-        return@runCatching test
+        return@runCatching loginService.sendCode(body)
     }
 
     override suspend fun verifyCode(
@@ -44,9 +45,12 @@ class LoginServiceImpl @Inject constructor(
         return@runCatching loginService.verifyCode(verifyOTPRequestDTO)
     }
 
-    override suspend fun refreshToken(
-        refreshTokenRequestDTO: RefreshTokenRequestDTO
-    ): Result<VerifyOTPResponseDTO> = runCatching {
+    override suspend fun refreshToken(): Result<VerifyOTPResponseDTO> = runCatching {
+        val refreshTokenRequestDTO = dataStore.data.first()[Utils.TOKEN]?.let {
+            RefreshTokenRequestDTO(
+                token = it
+            )
+        } ?: RefreshTokenRequestDTO("")
         return@runCatching loginService.refreshToken(refreshTokenRequestDTO)
     }
 

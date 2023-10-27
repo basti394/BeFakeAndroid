@@ -1,5 +1,8 @@
 package pizza.xyz.befake.data
 
+import javax.inject.Inject
+import javax.inject.Singleton
+
 interface PostService {
 
 }

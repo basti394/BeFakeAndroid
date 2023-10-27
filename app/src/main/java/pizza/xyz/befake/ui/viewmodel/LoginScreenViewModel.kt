@@ -1,6 +1,5 @@
 package pizza.xyz.befake.ui.viewmodel
 
-import android.media.session.MediaSession.Token
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -14,8 +13,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import pizza.xyz.befake.Utils.TOKEN
 import pizza.xyz.befake.data.LoginService
-import pizza.xyz.befake.model.dtos.LoginRequestDTO
-import pizza.xyz.befake.model.dtos.VerifyOTPRequestDTO
+import pizza.xyz.befake.model.dtos.login.LoginRequestDTO
+import pizza.xyz.befake.model.dtos.verify.VerifyOTPRequestDTO
 import javax.inject.Inject
 
 @HiltViewModel

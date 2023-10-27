@@ -63,6 +63,8 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.44")
     kapt("androidx.hilt:hilt-compiler:1.0.0")
 
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
