@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,9 +33,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import pizza.xyz.befake.R
+import pizza.xyz.befake.Utils.debugPlaceholderProfilePicture
 import pizza.xyz.befake.ui.viewmodel.BeFakeTopAppBarViewModel
 import pizza.xyz.befake.ui.viewmodel.LoginState
 
@@ -45,9 +46,9 @@ fun BeFakeTopAppBar(
     viewModel: BeFakeTopAppBarViewModel = hiltViewModel()
 ) {
 
-    val profilePicture by viewModel.profilePicture.collectAsStateWithLifecycle()
+    val profilePictureUrl by viewModel.profilePictureUrl.collectAsState()
 
-    BeFakeTopAppBarContent(loginState = loginState, profilePicture = profilePicture?.url ?: "")
+    BeFakeTopAppBarContent(loginState = loginState, profilePicture = profilePictureUrl)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,21 +115,14 @@ fun Header(
                 )
             )
             if (loginState is LoginState.LoggedIn) {
-                if (profilePicture == "") {
-                    Box(modifier = Modifier
-                        .clip(CircleShape)
+                AsyncImage(
+                    modifier = Modifier
                         .size(30.dp)
-                        .background(Color.LightGray))
-                } else {
-                    AsyncImage(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clip(CircleShape),
-                        placeholder = debugPlaceholder(id = R.drawable.profile_picture_example),
-                        model = profilePicture,
-                        contentDescription = "profilePicture"
-                    )
-                }
+                        .clip(CircleShape),
+                    placeholder = debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
+                    model = profilePicture,
+                    contentDescription = "profilePicture"
+                )
             }
         }
     }

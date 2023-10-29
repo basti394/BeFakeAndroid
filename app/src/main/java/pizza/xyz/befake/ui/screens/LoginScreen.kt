@@ -44,11 +44,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import pizza.xyz.befake.R
+import pizza.xyz.befake.Utils.debugPlaceholder
 import pizza.xyz.befake.Utils.flagType
 import pizza.xyz.befake.Utils.getCountries
 import pizza.xyz.befake.model.countrycode.Country
 import pizza.xyz.befake.ui.composables.CountryCodeSelectionSheet
-import pizza.xyz.befake.ui.composables.debugPlaceholder
 import pizza.xyz.befake.ui.viewmodel.LoginScreenViewModel
 import pizza.xyz.befake.ui.viewmodel.LoginState
 
@@ -98,7 +98,7 @@ fun LoginScreen(
     val buttonEnabled = when(loginState) {
         is LoginState.PhoneNumber -> phoneNumber.isNotEmpty()
         is LoginState.OTPCode -> otpCode.length == 6
-        is LoginState.Error -> phoneNumber.isNotEmpty()
+        is LoginState.Error -> phoneNumber.isNotEmpty() || otpCode.length == 6
         is LoginState.LoggedIn -> false
         is LoginState.Loading -> true
     }

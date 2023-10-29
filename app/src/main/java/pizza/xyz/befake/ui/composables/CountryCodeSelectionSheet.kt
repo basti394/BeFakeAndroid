@@ -38,6 +38,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import pizza.xyz.befake.R
+import pizza.xyz.befake.Utils.debugPlaceholder
 import pizza.xyz.befake.Utils.flagType
 import pizza.xyz.befake.model.countrycode.Country
 import pizza.xyz.befake.ui.screens.textStyle

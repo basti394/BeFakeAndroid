@@ -5,7 +5,6 @@ import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
 import android.net.Uri
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,7 +46,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +57,8 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import pizza.xyz.befake.R
+import pizza.xyz.befake.Utils.debugPlaceholderPost
+import pizza.xyz.befake.Utils.debugPlaceholderProfilePicture
 import pizza.xyz.befake.Utils.testFeedPostLateThreeMinLocationBerlin
 import pizza.xyz.befake.Utils.testFeedPostNoLocation
 import pizza.xyz.befake.Utils.testFeedUser
@@ -85,7 +85,7 @@ fun Post(
 
         val userName = post.user.username
         val profilePictureUrl = post.user?.profilePicture?.url ?: ""
-        val profilePicture = if (profilePictureUrl == "") profilePictureUrl else "https://ui-avatars.com/api/?name=${userName.first()}&background=random&size=100"
+        val profilePicture = if (profilePictureUrl != "") profilePictureUrl else "https://ui-avatars.com/api/?name=${userName.first()}&background=random&size=100"
         val time = post.posts[0].takenAt
 
         Column(
@@ -174,7 +174,7 @@ fun PostImages(
         AsyncImage(
             model = mainImage,
             contentDescription = "primary",
-            placeholder = debugPlaceholder(id = R.drawable.post_example),
+            placeholder = debugPlaceholderPost(id = R.drawable.post_example),
 
             )
         if (visible) {
@@ -231,7 +231,7 @@ fun PostImages(
                             littleImage = tempMainImage
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         },
-                    placeholder = debugPlaceholder(id = R.drawable.post_example),
+                    placeholder = debugPlaceholderPost(id = R.drawable.post_example),
                     model = littleImage,
                     contentDescription = "primary"
                 )
@@ -265,7 +265,7 @@ fun Header(
                 modifier = Modifier
                     .size(35.dp)
                     .clip(CircleShape),
-                placeholder = debugPlaceholder(id = R.drawable.profile_picture_example),
+                placeholder = debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
                 model = profilePicture,
                 contentDescription = "profilePicture"
             )
@@ -320,7 +320,7 @@ fun Header(
                     if (isLate) {
                         Dot()
                         Text(
-                            text = getTimeLate(lateInSeconds),
+                            text = getTimeLate(lateInSeconds, context),
                             color = Color.Gray,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal
@@ -379,31 +379,24 @@ fun openInGoogleMaps(
 }
 
 fun getTimeLate(
-    lateInSeconds: Int
+    lateInSeconds: Int,
+    context: Context
 ) : String {
     return when {
         lateInSeconds < 60 -> {
-            "$lateInSeconds sec. late"
+            context.getString(R.string.sec_late, lateInSeconds.toString())
         }
         lateInSeconds < 3600 -> {
-            "${lateInSeconds/60} min. late"
+            context.getString(R.string.min_late, (lateInSeconds / 60).toString())
         }
         lateInSeconds < 86400 -> {
-            "${lateInSeconds/3600} h. late"
+            context.getString(R.string.h_late, (lateInSeconds / 3600).toString())
         }
         else -> {
             "late"
         }
     }
 }
-
-@Composable
-fun debugPlaceholder(@DrawableRes id: Int) =
-    if (LocalInspectionMode.current) {
-        painterResource(id = id)
-    } else {
-        null
-    }
 
 @Composable
 @Preview

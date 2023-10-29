@@ -12,6 +12,9 @@
     <string name="phone_numer_start_with_plus">Phone number must start with your country code (e.g. +49)</string>
     <string name="something_went_wrong_please_try_again">Etwas ist schief gelaufen. Bitte versuche es erneut! \n%1$s</string>
     <string name="choose_country">Land auswählen</string>
+    <string name="sec_late">%1$s sek. zu spät</string>
+    <string name="min_late">%1$s min. zu spät</string>
+    <string name="h_late">%1$s h. zu spät</string>
     <plurals name="view_comments">
         <item quantity="one">1 Kommentar anschauen</item>
         <item quantity="other">%d Kommentare anschauen</item>

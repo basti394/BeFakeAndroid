@@ -1,6 +1,10 @@
 package pizza.xyz.befake
 
 import android.content.Context
+import androidx.annotation.DrawableRes
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.painterResource
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -27,6 +31,30 @@ object Utils {
         val gson = Gson()
         return gson.fromJson(countries, countryType)
     }
+
+    @Composable
+    fun debugPlaceholder(@DrawableRes id: Int) =
+        if (LocalInspectionMode.current) {
+            painterResource(id = id)
+        } else {
+            null
+        }
+
+    @Composable
+    fun debugPlaceholderProfilePicture(@DrawableRes id: Int) =
+        if (LocalInspectionMode.current) {
+            painterResource(id = id)
+        } else {
+            painterResource(id = R.drawable.profile_picture_placeholder)
+        }
+
+    @Composable
+    fun debugPlaceholderPost(@DrawableRes id: Int) =
+        if (LocalInspectionMode.current) {
+            painterResource(id = id)
+        } else {
+            painterResource(id = R.drawable.post_placeholder)
+        }
 
     val testFeedUser = User(
         id = "1",

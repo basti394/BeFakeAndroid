@@ -11,6 +11,9 @@
     <string name="phone_numer_start_with_plus">Phone number must start with your country code (e.g. +49)</string>
     <string name="something_went_wrong_please_try_again">Something went wrong. Please try again! \n%1$s</string>
     <string name="choose_country">Choose Country</string>
+    <string name="sec_late">%1$s sec. late</string>
+    <string name="min_late">%1$s min. late</string>
+    <string name="h_late">%1$s h. late</string>
     <plurals name="view_comments">
         <item quantity="one">View 1 comment</item>
         <item quantity="other">View %d comments</item>

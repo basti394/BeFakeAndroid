@@ -1,6 +1,5 @@
 package pizza.xyz.befake.data
 
-import kotlinx.coroutines.coroutineScope
 import pizza.xyz.befake.model.dtos.feed.FeedResponseDTO
 import pizza.xyz.befake.model.dtos.friendsOfFriends.FriendsOfFriendsResponseDTO
 import pizza.xyz.befake.model.dtos.me.MeResponseDTO
@@ -20,16 +19,10 @@ interface FriendsService {
 @Singleton
 class FriendsServiceImpl @Inject constructor(
     private val friendsAPI: FriendsAPI,
-    private val loginService: LoginService
 ): FriendsService {
 
     override suspend fun feed(): Result<FeedResponseDTO> = runCatching {
-        var res = friendsAPI.feed()
-        if (res.status != 200) {
-            loginService.refreshToken()
-            res = friendsAPI.feed()
-        }
-        return@runCatching res
+        return@runCatching friendsAPI.feed()
     }
 
     override suspend fun friendsOfFriends(): Result<FriendsOfFriendsResponseDTO> = runCatching {
@@ -37,7 +30,9 @@ class FriendsServiceImpl @Inject constructor(
     }
 
     override suspend fun me(): Result<MeResponseDTO> = runCatching {
-        return@runCatching friendsAPI.me()
+        val res = friendsAPI.me()
+        println(res.message)
+        return@runCatching res
     }
 
     interface FriendsAPI {
