@@ -15,10 +15,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import pizza.xyz.befake.R
 import pizza.xyz.befake.Utils.TOKEN
+import pizza.xyz.befake.Utils.getCountries
 import pizza.xyz.befake.data.LoginService
 import pizza.xyz.befake.model.countrycode.Country
 import pizza.xyz.befake.model.dtos.login.LoginRequestDTO
 import pizza.xyz.befake.model.dtos.verify.VerifyOTPRequestDTO
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -54,12 +56,14 @@ class LoginScreenViewModel @Inject constructor(
                 }
             }
             checkToken.await()
-
-            val getDefaultCountry = async {
-                _country.value = Country("Deutschland", "+49", "DE")
-            }
-            getDefaultCountry.await()
+            setDefaultCountry()
         }
+    }
+
+    private fun setDefaultCountry() {
+
+        val dialCode = getCountries().find { it.code == Locale.getDefault().country }?.dialCode ?: "+49"
+        _country.value = Country(Locale.getDefault().displayCountry, dialCode, Locale.getDefault().country)
     }
 
     fun onCountryChanged(newCountry: Country) {

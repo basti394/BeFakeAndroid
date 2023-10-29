@@ -32,6 +32,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             val viewModel: LoginScreenViewModel = hiltViewModel()
             val loginState by viewModel.loginState.collectAsStateWithLifecycle()
