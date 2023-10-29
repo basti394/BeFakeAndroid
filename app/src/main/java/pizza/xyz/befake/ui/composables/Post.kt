@@ -1,35 +1,28 @@
 package pizza.xyz.befake.ui.composables
 
+import android.content.Context
+import android.content.Intent
+import android.location.Address
+import android.location.Geocoder
+import android.net.Uri
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.animate
-import androidx.compose.animation.core.animateIntOffsetAsState
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -38,7 +31,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ComposeCompilerApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,7 +44,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -61,12 +58,16 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.Async
+import pizza.xyz.befake.R
+import pizza.xyz.befake.Utils.testFeedPostLateThreeMinLocationBerlin
+import pizza.xyz.befake.Utils.testFeedPostNoLocation
+import pizza.xyz.befake.Utils.testFeedUser
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
+import pizza.xyz.befake.model.dtos.feed.Location
+import pizza.xyz.befake.model.dtos.feed.Moment
 import pizza.xyz.befake.model.dtos.feed.Posts
-import pizza.xyz.befake.model.dtos.feed.ProfilePicture
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
+import java.util.Locale
 import kotlin.math.roundToInt
 
 const val borderMargin = 50f
@@ -75,15 +76,16 @@ const val cornerRadius = 16
 @Composable
 fun Post(
     modifier: Modifier = Modifier,
-    post: FriendsPosts? = null,
+    post: FriendsPosts?,
 ) {
 
     if (post == null) {
         Spacer(modifier = modifier.fillMaxSize())
     } else {
 
-        val profilePicture = post.user?.profilePicture?.url ?: post.posts[0].secondary.url
         val userName = post.user.username
+        val profilePictureUrl = post.user?.profilePicture?.url ?: ""
+        val profilePicture = if (profilePictureUrl == "") profilePictureUrl else "https://ui-avatars.com/api/?name=${userName.first()}&background=random&size=100"
         val time = post.posts[0].takenAt
 
         Column(
@@ -92,7 +94,10 @@ fun Post(
             Header(
                 profilePicture = profilePicture,
                 userName = userName,
-                time = time
+                time = time,
+                location = post.posts[0].location,
+                isLate = post.posts[0].isLate,
+                lateInSeconds = post.posts[0].lateInSeconds
             )
 
             if (post.posts.size == 1) {
@@ -119,7 +124,10 @@ fun Post(
                     )
                 }
                 Text(
-                    text = "Add comment...",
+                    text = when (post.posts[0].comments.size) {
+                        0 -> stringResource(R.string.add_comment)
+                        else -> pluralStringResource(R.plurals.view_comments, post.posts[0].comments.size)
+                    },
                     color = Color.Gray,
                 )
             }
@@ -165,8 +173,10 @@ fun PostImages(
 
         AsyncImage(
             model = mainImage,
-            contentDescription = "primary"
-        )
+            contentDescription = "primary",
+            placeholder = debugPlaceholder(id = R.drawable.post_example),
+
+            )
         if (visible) {
             Box(
                 modifier = Modifier
@@ -209,7 +219,6 @@ fun PostImages(
                                 outerBoxSize.y - (boxSize.height + borderMargin)
                             )
                         }
-                        //2147483647
                     }
             ) {
                 AsyncImage(
@@ -222,6 +231,7 @@ fun PostImages(
                             littleImage = tempMainImage
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         },
+                    placeholder = debugPlaceholder(id = R.drawable.post_example),
                     model = littleImage,
                     contentDescription = "primary"
                 )
@@ -235,8 +245,14 @@ fun PostImages(
 fun Header(
     profilePicture: String,
     userName: String,
-    time: String
+    time: String,
+    location: Location?,
+    isLate: Boolean = false,
+    lateInSeconds: Int = 0
 ) {
+
+    val context = LocalContext.current
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -246,18 +262,19 @@ fun Header(
            verticalAlignment = Alignment.CenterVertically
        ) {
             AsyncImage(
-                 modifier = Modifier
-                     .size(35.dp)
-                     .clip(CircleShape),
-                 model = profilePicture,
-                 contentDescription = "profilePicture"
+                modifier = Modifier
+                    .size(35.dp)
+                    .clip(CircleShape),
+                placeholder = debugPlaceholder(id = R.drawable.profile_picture_example),
+                model = profilePicture,
+                contentDescription = "profilePicture"
             )
             Column(
                  modifier = Modifier.padding(start = 8.dp)
             ) {
 
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-                val outputDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
+                val outputDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm")
 
                 Text(
                       text = userName,
@@ -265,12 +282,51 @@ fun Header(
                       fontSize = 16.sp,
                       fontWeight = FontWeight.SemiBold
                 )
-                Text(
-                    text = inputFormat.parse(time)?.let { outputDateFormat.format(it) } ?: time,
-                    color = Color.Gray,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    if (location != null) {
+                        val string: String? = if (LocalInspectionMode.current) {
+                            "Berlin, Germany"
+                        } else {
+                            getLocation(location, context)
+                        }
+                        string?.let {
+                            Text(
+                                modifier = Modifier
+                                    .clickable {
+                                        openInGoogleMaps(
+                                            long = location.longitude,
+                                            lat = location.latitude,
+                                            userName = userName,
+                                            context = context
+                                        )
+                                    },
+                                text = it,
+                                color = Color.Gray,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal
+                            )
+                            Dot()
+                        }
+                    }
+                    Text(
+                        text = inputFormat.parse(time)?.let { outputDateFormat.format(it) } ?: time,
+                        color = Color.Gray,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                    if (isLate) {
+                        Dot()
+                        Text(
+                            text = getTimeLate(lateInSeconds),
+                            color = Color.Gray,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                }
             }
        }
 
@@ -284,9 +340,89 @@ fun Header(
     }
 }
 
+@Composable
+fun Dot() {
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 5.dp)
+            .size(4.dp)
+            .clip(CircleShape)
+            .background(Color.Gray)
+    )
+}
+
+fun getLocation(
+    location: Location,
+    context: Context
+): String? {
+        
+    val geocoder = Geocoder(context, Locale.getDefault())
+    val addresses: List<Address>? = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+    val cityName: String? = addresses?.get(0)?.locality
+    val countryName: String? = addresses?.get(0)?.countryName
+
+    if (cityName != null && countryName != null) {
+        return "$cityName, $countryName"
+    }
+    return null
+}
+
+fun openInGoogleMaps(
+    long: Double,
+    lat: Double,
+    userName: String,
+    context: Context
+) {
+    val uri = "geo:$lat,$long?q=$lat,$long($userName's BeReal)"
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
+    context.startActivity(intent)
+}
+
+fun getTimeLate(
+    lateInSeconds: Int
+) : String {
+    return when {
+        lateInSeconds < 60 -> {
+            "$lateInSeconds sec. late"
+        }
+        lateInSeconds < 3600 -> {
+            "${lateInSeconds/60} min. late"
+        }
+        lateInSeconds < 86400 -> {
+            "${lateInSeconds/3600} h. late"
+        }
+        else -> {
+            "late"
+        }
+    }
+}
+
+@Composable
+fun debugPlaceholder(@DrawableRes id: Int) =
+    if (LocalInspectionMode.current) {
+        painterResource(id = id)
+    } else {
+        null
+    }
 
 @Composable
 @Preview
 fun PostPreview() {
-    Post()
+    val friendsPost = FriendsPosts(
+        user = testFeedUser,
+        momentId = "1",
+        region = "de",
+        moment = Moment(
+            id = "1",
+            region = "de"
+        ),
+        posts = listOf(
+            testFeedPostLateThreeMinLocationBerlin,
+            testFeedPostNoLocation
+        )
+    )
+
+    Post(
+        post = friendsPost,
+    )
 }
