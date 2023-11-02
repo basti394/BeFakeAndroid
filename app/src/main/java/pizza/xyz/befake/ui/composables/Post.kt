@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,12 +44,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -59,6 +61,7 @@ import kotlinx.coroutines.launch
 import pizza.xyz.befake.R
 import pizza.xyz.befake.Utils.debugPlaceholderPost
 import pizza.xyz.befake.Utils.debugPlaceholderProfilePicture
+import pizza.xyz.befake.Utils.shimmerBrush
 import pizza.xyz.befake.Utils.testFeedPostLateThreeMinLocationBerlin
 import pizza.xyz.befake.Utils.testFeedPostNoLocation
 import pizza.xyz.befake.Utils.testFeedUser
@@ -83,10 +86,14 @@ fun Post(
         Spacer(modifier = modifier.fillMaxSize())
     } else {
 
-        val userName = post.user.username
-        val profilePictureUrl = post.user?.profilePicture?.url ?: ""
-        val profilePicture = if (profilePictureUrl != "") profilePictureUrl else "https://ui-avatars.com/api/?name=${userName.first()}&background=random&size=100"
-        val time = post.posts[0].takenAt
+        val userName = remember { post.user.username }
+        val profilePictureUrl = remember { post.user?.profilePicture?.url ?: "" }
+        val profilePicture = remember {
+            if (profilePictureUrl != "") profilePictureUrl else "https://ui-avatars.com/api/?name=${userName.first()}&background=random&size=100"
+        }
+        val time = remember {
+            post.posts[0].takenAt
+        }
 
         Column(
             modifier = modifier
@@ -126,7 +133,8 @@ fun Post(
                 Text(
                     text = when (post.posts[0].comments.size) {
                         0 -> stringResource(R.string.add_comment)
-                        else -> pluralStringResource(R.plurals.view_comments, post.posts[0].comments.size)
+                        1 -> stringResource(id = R.string.view_comment)
+                        else -> stringResource(id = R.string.view_comments, post.posts[0].comments.size)
                     },
                     color = Color.Gray,
                 )
@@ -146,8 +154,11 @@ fun PostImages(
         mutableStateOf(true)
     }
     val haptic = LocalHapticFeedback.current
-    var mainImage by remember{ mutableStateOf(post.primary.url) }
-    var littleImage by remember{ mutableStateOf(post.secondary.url) }
+    val primary = remember { post.primary.url }
+    val secondary = remember { post.secondary.url }
+    var showPrimaryAsMain by remember {
+        mutableStateOf(true)
+    }
 
     Box(
         modifier = Modifier
@@ -172,11 +183,19 @@ fun PostImages(
         var offsetY by remember { mutableStateOf(borderMargin) }
 
         AsyncImage(
-            model = mainImage,
+            model = secondary,
             contentDescription = "primary",
             placeholder = debugPlaceholderPost(id = R.drawable.post_example),
-
+        )
+        if (showPrimaryAsMain) {
+            AsyncImage(
+                model = primary,
+                contentDescription = "primary",
+                placeholder = debugPlaceholderPost(id = R.drawable.post_example),
             )
+        }
+
+
         if (visible) {
             Box(
                 modifier = Modifier
@@ -226,20 +245,64 @@ fun PostImages(
                         .clip(RoundedCornerShape(cornerRadius.dp))
                         .border(2.dp, Color.Black, RoundedCornerShape(cornerRadius.dp))
                         .clickable {
-                            val tempMainImage = mainImage
-                            mainImage = littleImage
-                            littleImage = tempMainImage
+                            showPrimaryAsMain = !showPrimaryAsMain
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         },
                     placeholder = debugPlaceholderPost(id = R.drawable.post_example),
-                    model = littleImage,
+                    model = primary,
                     contentDescription = "primary"
                 )
+                if (showPrimaryAsMain) {
+                    AsyncImage(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(cornerRadius.dp))
+                            .border(2.dp, Color.Black, RoundedCornerShape(cornerRadius.dp))
+                            .clickable {
+                                showPrimaryAsMain = !showPrimaryAsMain
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            },
+                        placeholder = debugPlaceholderPost(id = R.drawable.post_example),
+                        model = secondary,
+                        contentDescription = "primary"
+                    )
+                }
             }
         }
 
     }
 }
+
+@Composable
+fun PostLoading() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+    ) {
+        Header(
+            profilePicture = "",
+            userName = "",
+            time = "",
+            location = null,
+            isLate = false,
+            lateInSeconds = 0
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .size(550.dp)
+                .clip(RoundedCornerShape(cornerRadius.dp))
+                .background(shimmerBrush())
+        )
+        Text(
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
+            text = stringResource(R.string.add_comment),
+            color = Color.Gray,
+        )
+    }
+}
+
+
 
 @Composable
 fun Header(
@@ -258,7 +321,8 @@ fun Header(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
        Row(
-           modifier = Modifier.padding(horizontal = 16.dp),
+           modifier = Modifier
+               .padding(horizontal = 16.dp),
            verticalAlignment = Alignment.CenterVertically
        ) {
             AsyncImage(
@@ -274,7 +338,7 @@ fun Header(
             ) {
 
                 val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-                val outputDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm")
+                val outputDateFormat = SimpleDateFormat("HH:mm")
 
                 Text(
                       text = userName,
@@ -283,6 +347,7 @@ fun Header(
                       fontWeight = FontWeight.SemiBold
                 )
                 Row(
+                    modifier = Modifier.width((LocalConfiguration.current.screenWidthDp * 0.7f).dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
@@ -294,6 +359,7 @@ fun Header(
                         }
                         string?.let {
                             Text(
+                                maxLines = 1,
                                 modifier = Modifier
                                     .clickable {
                                         openInGoogleMaps(
@@ -303,6 +369,7 @@ fun Header(
                                             context = context
                                         )
                                     },
+                                overflow = TextOverflow.Ellipsis,
                                 text = it,
                                 color = Color.Gray,
                                 fontSize = 12.sp,
@@ -311,15 +378,21 @@ fun Header(
                             Dot()
                         }
                     }
-                    Text(
-                        text = inputFormat.parse(time)?.let { outputDateFormat.format(it) } ?: time,
-                        color = Color.Gray,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal
-                    )
+                    if (time.isNotBlank()) {
+                        Text(
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            text = inputFormat.parse(time)?.let { outputDateFormat.format(it) } ?: time,
+                            color = Color.Gray,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
                     if (isLate) {
                         Dot()
                         Text(
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             text = getTimeLate(lateInSeconds, context),
                             color = Color.Gray,
                             fontSize = 12.sp,
@@ -330,7 +403,9 @@ fun Header(
             }
        }
 
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(
+            onClick = { /*TODO*/ }
+        ) {
             Icon(
                 imageVector = Icons.Outlined.MoreVert,
                 contentDescription = "More",

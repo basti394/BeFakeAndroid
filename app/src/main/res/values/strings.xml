@@ -14,8 +14,6 @@
     <string name="sec_late">%1$s sec. late</string>
     <string name="min_late">%1$s min. late</string>
     <string name="h_late">%1$s h. late</string>
-    <plurals name="view_comments">
-        <item quantity="one">View 1 comment</item>
-        <item quantity="other">View %d comments</item>
-    </plurals>
+    <string name="view_comment">View 1 comment</string>
+    <string name="view_comments">View %d comments</string>
 </resources>

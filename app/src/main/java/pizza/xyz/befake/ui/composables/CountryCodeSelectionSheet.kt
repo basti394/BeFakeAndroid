@@ -98,7 +98,10 @@ fun CountryCodeSelectionSheet(
                         .fillMaxSize()
                         .background(Color.Black)
                 ) {
-                    items(countries.size) { index ->
+                    items(
+                        count = countries.size,
+                        key = { it }
+                    ) { index ->
                         val country = countries[index]
                         val prevCountry = countries.getOrNull(index - 1)
                         if (index == 0 || country.name.first() != prevCountry?.name?.first()) {

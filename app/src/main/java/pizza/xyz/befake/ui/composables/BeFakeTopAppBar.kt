@@ -1,6 +1,7 @@
 package pizza.xyz.befake.ui.composables
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import pizza.xyz.befake.R
 import pizza.xyz.befake.Utils.debugPlaceholderProfilePicture
@@ -46,9 +47,10 @@ fun BeFakeTopAppBar(
     viewModel: BeFakeTopAppBarViewModel = hiltViewModel()
 ) {
 
-    val profilePictureUrl by viewModel.profilePictureUrl.collectAsState()
+    val profilePicture by viewModel.profilePicture.collectAsStateWithLifecycle()
+    val userNamePb by viewModel.usernamePb.collectAsStateWithLifecycle()
 
-    BeFakeTopAppBarContent(loginState = loginState, profilePicture = profilePictureUrl)
+    BeFakeTopAppBarContent(loginState = loginState, profilePicture = profilePicture?.url ?: userNamePb)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,6 +120,7 @@ fun Header(
                 AsyncImage(
                     modifier = Modifier
                         .size(30.dp)
+                        .border(1.dp, Color.Black, CircleShape)
                         .clip(CircleShape),
                     placeholder = debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
                     model = profilePicture,

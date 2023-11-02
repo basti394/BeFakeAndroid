@@ -185,7 +185,8 @@ fun LoginScreenContent(
             is LoginState.OTPCode -> OTPCodeInput(
                 value = otpCode,
                 onValueChange = onOptCodeChanged,
-                focusRequester = focusRequester
+                focusRequester = focusRequester,
+                onSubmit = onButtonClicked
             )
             is LoginState.Error, is LoginState.Loading -> {
                 if ((loginState as LoginState.LoginStateWithPreviousState).previousState is LoginState.PhoneNumber) {
@@ -201,6 +202,7 @@ fun LoginScreenContent(
                         value = otpCode,
                         onValueChange = onOptCodeChanged,
                         focusRequester = null,
+                        onSubmit = onButtonClicked
                     )
                 }
             }
@@ -448,6 +450,7 @@ fun OTPCodeInput(
     value: String,
     onValueChange: (String) -> Unit,
     focusRequester: FocusRequester?,
+    onSubmit: () -> Unit
 ) {
 
     val textSelectionColors = TextSelectionColors(
@@ -472,6 +475,10 @@ fun OTPCodeInput(
             value = value,
             onValueChange = {
                 if (it.length <= 6) onValueChange(it)
+                if (it.length == 6) {
+                    onSubmit()
+                    focusRequester?.freeFocus()
+                }
             },
             cursorBrush = SolidColor(Color.White),
             keyboardOptions = KeyboardOptions(

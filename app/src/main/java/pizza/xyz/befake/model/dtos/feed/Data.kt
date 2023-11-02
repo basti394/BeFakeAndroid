@@ -18,5 +18,5 @@ data class Data (
 
 	@SerializedName("done") val done : Boolean,
 	@SerializedName("msg") val msg : String,
-	@SerializedName("data") val data : PostData
+	@SerializedName("data") val data : PostData?
 )

@@ -11,13 +11,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pizza.xyz.befake.Utils.testFeedPostLateThreeMinLocationBerlin
@@ -37,7 +40,9 @@ import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.model.dtos.feed.UserPosts
 import pizza.xyz.befake.ui.composables.BeFakeTopAppBarContent
 import pizza.xyz.befake.ui.composables.Post
+import pizza.xyz.befake.ui.composables.PostLoading
 import pizza.xyz.befake.ui.theme.BeFakeTheme
+import pizza.xyz.befake.ui.viewmodel.HomeScreenState
 import pizza.xyz.befake.ui.viewmodel.HomeScreenViewModel
 import pizza.xyz.befake.ui.viewmodel.LoginState
 
@@ -48,28 +53,54 @@ fun HomeScreen(
 ) {
 
     val feed by homeScreenViewModel.feed.collectAsStateWithLifecycle()
+    val state by homeScreenViewModel.state.collectAsStateWithLifecycle()
 
     HomeScreenContent(
         feed = feed,
+        state = state
     )
 }
 
 @Composable
 fun HomeScreenContent(
     feed: FeedResponseDTO?,
+    state: HomeScreenState
 ) {
+
+
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         val count = feed?.data?.data?.friendsPosts?.size ?: 3
-
-        items(count) {
-            if (it == 0) Spacer(modifier = Modifier.height(90.dp))
-            Post(
-                post = feed?.data?.data?.friendsPosts?.reversed()?.get(it),
-                modifier = Modifier.padding(vertical = 8.dp),
-            )
+        item { Spacer(modifier = Modifier.height(100.dp)) }
+        when(state) {
+            is HomeScreenState.Loading -> {
+                items(4) {
+                    PostLoading()
+                }
+            }
+            is HomeScreenState.Loaded -> {
+                items(
+                    count = count,
+                    key = { it },
+                ) {
+                    Post(
+                        post = feed?.data?.data?.friendsPosts?.reversed()?.get(it),
+                        modifier = Modifier.padding(vertical = 8.dp),
+                    )
+                }
+            }
+            is HomeScreenState.Error -> {
+                item {
+                    Text(
+                        text = state.message,
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }
@@ -202,7 +233,41 @@ fun HomeScreenPreview() {
                 color = Color.Black
             ) {
                 HomeScreenContent(
-                    feed = feed
+                    feed = feed,
+                    state = HomeScreenState.Loaded
+                )
+            }
+        }
+    }
+
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+fun HomeScreenLoadingPreview() {
+
+    BeFakeTheme(
+        darkTheme = true
+    ) {
+        Scaffold(
+            topBar = {
+                BeFakeTopAppBarContent(
+                    loginState = LoginState.LoggedIn,
+                    profilePicture = "https://picsum.photos/1000/1000"
+                )
+            }
+        ) { padding ->
+            val o = padding
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize(),
+                color = Color.Black
+            ) {
+                HomeScreenContent(
+                    feed = null,
+                    state = HomeScreenState.Loading
                 )
             }
         }
