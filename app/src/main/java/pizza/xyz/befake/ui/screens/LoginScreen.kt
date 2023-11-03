@@ -37,6 +37,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.LineBreak
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -98,7 +99,10 @@ fun LoginScreen(
     val buttonEnabled = when(loginState) {
         is LoginState.PhoneNumber -> phoneNumber.isNotEmpty()
         is LoginState.OTPCode -> otpCode.length == 6
-        is LoginState.Error -> phoneNumber.isNotEmpty() || otpCode.length == 6
+        is LoginState.Error -> {
+            if ((loginState as LoginState.Error).previousState == LoginState.PhoneNumber) phoneNumber.isNotEmpty()
+            else otpCode.length == 6
+        }
         is LoginState.LoggedIn -> false
         is LoginState.Loading -> true
     }
@@ -166,6 +170,7 @@ fun LoginScreenContent(
     ) {
         Text(
             text = headerText,
+            textAlign = TextAlign.Center,
             style = TextStyle(
                 lineBreak = LineBreak.Simple,
                 color = if (loginState is LoginState.Error) Color.Red else Color.White,
@@ -617,7 +622,5 @@ fun LoginScreenErrorOTPCodePreview() {
         onBackToPhoneNumberClicked = {},
         onCountrySelected = {},
         currentCountry = Country("Germany", "+49", "DE")
-
-
     )
 }

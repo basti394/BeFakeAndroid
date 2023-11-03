@@ -1,19 +1,14 @@
 package pizza.xyz.befake.ui.viewmodel
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import pizza.xyz.befake.R
-import pizza.xyz.befake.Utils.TOKEN
 import pizza.xyz.befake.Utils.getCountries
 import pizza.xyz.befake.data.LoginService
 import pizza.xyz.befake.model.countrycode.Country
@@ -25,11 +20,9 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginScreenViewModel @Inject constructor(
     private val loginService: LoginService,
-    private val dataStore: DataStore<Preferences>,
 ) : ViewModel() {
 
-    private val _loginState: MutableStateFlow<LoginState> = MutableStateFlow(LoginState.PhoneNumber)
-    val loginState = _loginState.asStateFlow()
+    val loginState = loginService.loginState
 
     private val _phoneNumber = MutableStateFlow("")
     val phoneNumber = _phoneNumber.asStateFlow()
@@ -48,19 +41,12 @@ class LoginScreenViewModel @Inject constructor(
 
     init {
         runBlocking(Dispatchers.IO) {
-            val checkToken = async {
-                val token = dataStore.data.first()[TOKEN]
-                if (token?.isNotEmpty() == true) {
-                    _loginState.value = LoginState.LoggedIn
-                }
-            }
-            checkToken.await()
+            loginService.checkIfLoggedIn()
             setDefaultCountry()
         }
     }
 
     private fun setDefaultCountry() {
-
         val dialCode = getCountries().find { it.code == Locale.getDefault().country }?.dialCode ?: "+49"
         _country.value = Country(Locale.getDefault().displayCountry, dialCode, Locale.getDefault().country)
     }
@@ -74,42 +60,33 @@ class LoginScreenViewModel @Inject constructor(
     }
 
     fun onLoginClicked() {
-        _loginState.value = LoginState.Loading(LoginState.PhoneNumber)
         val phoneNumberWithCountry = "${country.value.dialCode}${phoneNumber.value}"
-        if (!phoneNumberWithCountry.startsWith("+")) {
-            _loginState.value = LoginState.Error(LoginState.PhoneNumber, R.string.phone_numer_start_with_plus)
-            return
-        }
         viewModelScope.launch {
-            val res = loginService.sendCode(LoginRequestDTO(phoneNumberWithCountry))
-            if (res.isSuccess){
-                _otpSession.value = res.getOrNull()?.data?.otpSession ?: ""
-                _loginState.value = LoginState.OTPCode
-            } else if (res.isFailure) {
-                _loginState.value = LoginState.Error(
-                    LoginState.PhoneNumber,
-                    R.string.something_went_wrong_please_try_again,
-                    res.exceptionOrNull()?.message
-                )
+            loginService.sendCode(LoginRequestDTO(phoneNumberWithCountry)).onSuccess {
+                _otpSession.value = it.data?.otpSession ?: ""
+            }.onFailure {
+                if (it.message != "Invalid phone number") {
+                    loginService.setLoginState(LoginState.Error(
+                        LoginState.PhoneNumber,
+                        R.string.something_went_wrong_please_try_again,
+                        it.message
+                    ))
+                }
             }
         }
     }
 
     fun onVerifyClicked() {
         viewModelScope.launch {
-            _loginState.value = LoginState.Loading(LoginState.OTPCode)
-            val res = loginService.verifyCode(VerifyOTPRequestDTO(_otpSession.value, optCode.value))
-            if (res.isSuccess) {
-                _loginState.value = LoginState.LoggedIn
-            } else if (res.isFailure) {
-                _loginState.value = LoginState.Error(LoginState.OTPCode, R.string.something_went_wrong_please_try_again, res.exceptionOrNull()?.message)
+            loginService.verifyCode(VerifyOTPRequestDTO(_otpSession.value, optCode.value)).onFailure {
+                loginService.setLoginState(LoginState.Error(LoginState.OTPCode, R.string.something_went_wrong_please_try_again, it.message))
             }
         }
     }
 
     fun onBackToPhoneNumberClicked() {
         resetValues()
-        _loginState.value = LoginState.PhoneNumber
+        loginService.setLoginState(LoginState.PhoneNumber)
     }
 
     private fun resetValues() {

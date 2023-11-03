@@ -16,4 +16,5 @@
     <string name="h_late">%1$s h. late</string>
     <string name="view_comment">View 1 comment</string>
     <string name="view_comments">View %d comments</string>
+    <string name="log_out_text">Sorry we had to log you out! Please login again.</string>
 </resources>

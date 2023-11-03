@@ -102,6 +102,7 @@ object Utils {
                 this.handle(onSuccess, loginService)
             }.onFailure {
                 println(it.message)
+                //loginService.logOut()
             }
         }
     }
