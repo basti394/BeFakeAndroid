@@ -19,6 +19,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import pizza.xyz.befake.data.LoginService
 import pizza.xyz.befake.model.countrycode.Country
 import pizza.xyz.befake.model.dtos.feed.Location
 import pizza.xyz.befake.model.dtos.feed.Posts
@@ -29,6 +30,7 @@ import pizza.xyz.befake.model.dtos.feed.User
 import java.lang.reflect.Type
 
 object Utils {
+
     val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "auth")
     val TOKEN = stringPreferencesKey("token")
     const val BASE_URL = "https://berealapi.fly.dev/"
@@ -85,6 +87,22 @@ object Utils {
                 start = Offset.Zero,
                 end = Offset.Zero
             )
+        }
+    }
+
+    suspend fun <T> (suspend () -> Result<T>).handle(
+        onSuccess: (T) -> Unit,
+        loginService: LoginService
+    ) {
+        val res = this()
+        if (res.isSuccess) {
+            res.getOrNull()?.let(onSuccess)
+        } else if (res.isFailure) {
+            loginService.refreshToken().onSuccess {
+                this.handle(onSuccess, loginService)
+            }.onFailure {
+                println(it.message)
+            }
         }
     }
 

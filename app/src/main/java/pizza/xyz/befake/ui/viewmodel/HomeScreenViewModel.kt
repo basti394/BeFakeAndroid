@@ -7,13 +7,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import pizza.xyz.befake.Utils.handle
 import pizza.xyz.befake.data.FriendsService
+import pizza.xyz.befake.data.LoginService
 import pizza.xyz.befake.model.dtos.feed.FeedResponseDTO
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val friendsService: FriendsService
+    private val friendsService: FriendsService,
+    private val loginService: LoginService
 ) : ViewModel() {
 
     private val _feed: MutableStateFlow<FeedResponseDTO?> = MutableStateFlow(null)
@@ -29,13 +32,13 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     private suspend fun getFeed() {
-        friendsService.feed().onSuccess {
-            _feed.value = formatFeed(it)
-            _state.value = HomeScreenState.Loaded
-        }.onFailure {
-            println(it.message)
-            _state.value = HomeScreenState.Error(it.message ?: "Unknown error")
-        }
+        suspend { friendsService.feed() }.handle(
+            onSuccess = {
+                _feed.value = formatFeed(it)
+                _state.value = HomeScreenState.Loaded
+            },
+            loginService = loginService
+        )
     }
 
     private fun formatFeed(feedResponseDTO: FeedResponseDTO?) : FeedResponseDTO? {

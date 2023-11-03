@@ -2,7 +2,6 @@ package pizza.xyz.befake.ui.viewmodel
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -97,14 +96,10 @@ class LoginScreenViewModel @Inject constructor(
     }
 
     fun onVerifyClicked() {
-
         viewModelScope.launch {
             _loginState.value = LoginState.Loading(LoginState.OTPCode)
             val res = loginService.verifyCode(VerifyOTPRequestDTO(_otpSession.value, optCode.value))
             if (res.isSuccess) {
-                dataStore.edit { pref ->
-                    pref[TOKEN] = res.getOrNull()?.data?.token ?: ""
-                }
                 _loginState.value = LoginState.LoggedIn
             } else if (res.isFailure) {
                 _loginState.value = LoginState.Error(LoginState.OTPCode, R.string.something_went_wrong_please_try_again, res.exceptionOrNull()?.message)

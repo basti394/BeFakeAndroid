@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import pizza.xyz.befake.Utils.handle
 import pizza.xyz.befake.data.FriendsService
 import pizza.xyz.befake.data.LoginService
 import pizza.xyz.befake.model.dtos.me.ProfilePicture
@@ -43,17 +44,13 @@ class BeFakeTopAppBarViewModel @Inject constructor(
     }
 
     private suspend fun getProfilePicture() {
-        friendsService.me().onSuccess {
-            _profilePicture.value = it.data.profilePicture
-            _username.value = it.data.username
-        }.onFailure {
-            println(it.message)
-            loginService.refreshToken().onSuccess {
-                getProfilePicture()
-            }.onFailure { rt ->
-                println(rt.message)
-            }
-        }
+        suspend { friendsService.me() }.handle(
+            onSuccess = {
+                _profilePicture.value = it.data.profilePicture
+                _username.value = it.data.username
+            },
+            loginService = loginService
+        )
     }
 
 }

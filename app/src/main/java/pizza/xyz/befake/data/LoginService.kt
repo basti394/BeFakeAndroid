@@ -2,6 +2,7 @@ package pizza.xyz.befake.data
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.first
 import pizza.xyz.befake.Utils
 import pizza.xyz.befake.model.dtos.login.LoginRequestDTO
@@ -42,7 +43,13 @@ class LoginServiceImpl @Inject constructor(
     override suspend fun verifyCode(
         verifyOTPRequestDTO: VerifyOTPRequestDTO
     ): Result<VerifyOTPResponseDTO> = runCatching {
-        return@runCatching loginService.verifyCode(verifyOTPRequestDTO)
+        val res = loginService.verifyCode(verifyOTPRequestDTO)
+        dataStore.edit { pref ->
+            res.data?.let {
+                pref[Utils.TOKEN] = res.data.token
+            }
+        }
+        return@runCatching res
     }
 
     override suspend fun refreshToken(): Result<VerifyOTPResponseDTO> = runCatching {
@@ -51,7 +58,13 @@ class LoginServiceImpl @Inject constructor(
                 token = it
             )
         } ?: RefreshTokenRequestDTO("")
-        return@runCatching loginService.refreshToken(refreshTokenRequestDTO)
+        val res = loginService.refreshToken(refreshTokenRequestDTO)
+        dataStore.edit { pref ->
+            res.data?.let {
+                pref[Utils.TOKEN] = res.data.token
+            }
+        }
+        return@runCatching res
     }
 
     interface LoginAPI {
