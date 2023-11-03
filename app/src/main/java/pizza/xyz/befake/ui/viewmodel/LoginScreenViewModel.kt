@@ -79,6 +79,7 @@ class LoginScreenViewModel @Inject constructor(
     fun onVerifyClicked() {
         viewModelScope.launch {
             loginService.verifyCode(VerifyOTPRequestDTO(_otpSession.value, optCode.value)).onFailure {
+                _optCode.value = ""
                 loginService.setLoginState(LoginState.Error(LoginState.OTPCode, R.string.something_went_wrong_please_try_again, it.message))
             }
         }

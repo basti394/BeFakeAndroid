@@ -121,10 +121,6 @@ fun LoginScreen(
         }
     }
 
-    if (loginState is LoginState.Error) {
-        viewModel.onOptCodeChanged("") // Clear the OTP TextField
-    }
-
     LoginScreenContent(
         loginState = loginState,
         phoneNumber = phoneNumber,
