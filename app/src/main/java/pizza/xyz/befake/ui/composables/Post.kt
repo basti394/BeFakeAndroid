@@ -32,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -117,6 +119,17 @@ fun Post(
                         }
                     }
                 }
+                /*LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    items(post.posts.size) {
+                        Dot(
+                            size = 6.dp,
+                            color = if
+                        )
+                    }
+                }*/
             }
 
             Column(
@@ -179,14 +192,15 @@ fun PostImages(
                 )
             }
     ) {
-        var offsetX by remember { mutableStateOf(borderMargin) }
-        var offsetY by remember { mutableStateOf(borderMargin) }
+        var offsetX by remember { mutableFloatStateOf(borderMargin) }
+        var offsetY by remember { mutableFloatStateOf(borderMargin) }
 
         AsyncImage(
             model = secondary,
             contentDescription = "primary",
             placeholder = debugPlaceholderPost(id = R.drawable.post_example),
         )
+
         if (showPrimaryAsMain) {
             AsyncImage(
                 model = primary,
@@ -252,6 +266,7 @@ fun PostImages(
                     model = primary,
                     contentDescription = "primary"
                 )
+
                 if (showPrimaryAsMain) {
                     AsyncImage(
                         modifier = Modifier
@@ -416,13 +431,16 @@ fun Header(
 }
 
 @Composable
-fun Dot() {
+fun Dot(
+    size: Dp = 4.dp,
+    color: Color = Color.Gray
+) {
     Box(
         modifier = Modifier
             .padding(horizontal = 5.dp)
-            .size(4.dp)
+            .size(size)
             .clip(CircleShape)
-            .background(Color.Gray)
+            .background(color)
     )
 }
 
