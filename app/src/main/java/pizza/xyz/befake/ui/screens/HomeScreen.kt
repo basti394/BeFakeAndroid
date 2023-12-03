@@ -67,12 +67,13 @@ fun HomeScreenContent(
     state: HomeScreenState
 ) {
 
+    val list = feed?.data?.data?.friendsPosts?.reversed()
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        val count = feed?.data?.data?.friendsPosts?.size ?: 3
+        val count = list?.size ?: 3
         item { Spacer(modifier = Modifier.height(100.dp)) }
         when(state) {
             is HomeScreenState.Loading -> {
@@ -86,7 +87,7 @@ fun HomeScreenContent(
                     key = { it },
                 ) {
                     Post(
-                        post = feed?.data?.data?.friendsPosts?.reversed()?.get(it),
+                        post = list?.get(it),
                         modifier = Modifier.padding(vertical = 8.dp),
                     )
                 }
@@ -102,6 +103,7 @@ fun HomeScreenContent(
                 }
             }
         }
+        item { Spacer(modifier = Modifier.height(25.dp)) }
     }
 }
 

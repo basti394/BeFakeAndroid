@@ -6,11 +6,13 @@ import android.location.Address
 import android.location.Geocoder
 import android.net.Uri
 import androidx.compose.animation.core.animate
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,8 +34,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -58,8 +63,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import pizza.xyz.befake.R
 import pizza.xyz.befake.Utils.debugPlaceholderPost
 import pizza.xyz.befake.Utils.debugPlaceholderProfilePicture
@@ -78,11 +85,24 @@ import kotlin.math.roundToInt
 const val borderMargin = 50f
 const val cornerRadius = 16
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Post(
     modifier: Modifier = Modifier,
     post: FriendsPosts?,
 ) {
+
+    val state = rememberLazyListState()
+    LaunchedEffect(key1 = Unit) {
+        state.scrollToItem(post?.posts?.size?.minus(1) ?: 0)
+    }
+
+
+    var current by remember {
+        mutableIntStateOf(post?.posts?.size?.minus(1) ?: 0)
+    }
+    
+    val flingBehavior = rememberSnapFlingBehavior(lazyListState = state)
 
     if (post == null) {
         Spacer(modifier = modifier.fillMaxSize())
@@ -94,7 +114,7 @@ fun Post(
             if (profilePictureUrl != "") profilePictureUrl else "https://ui-avatars.com/api/?name=${userName.first()}&background=random&size=100"
         }
         val time = remember {
-            post.posts[0].takenAt
+            post.posts[current].takenAt
         }
 
         Column(
@@ -104,54 +124,43 @@ fun Post(
                 profilePicture = profilePicture,
                 userName = userName,
                 time = time,
-                location = post.posts[0].location,
-                isLate = post.posts[0].isLate,
-                lateInSeconds = post.posts[0].lateInSeconds
+                location = post.posts[current].location,
+                isLate = post.posts[current].isLate,
+                lateInSeconds = post.posts[current].lateInSeconds
             )
 
-            if (post.posts.size == 1) {
-                PostImages(post = post.posts[0])
-            } else {
-                LazyRow {
-                    items(post.posts.size) {
-                        Box {
-                            PostImages(post = post.posts[it])
-                        }
-                    }
-                }
-                /*LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                state = state,
+                flingBehavior = flingBehavior,
+                userScrollEnabled = post.posts.size > 1
+            ) {
+                items(
+                    post.posts.size,
+                    key = { it }
                 ) {
-                    items(post.posts.size) {
-                        Dot(
-                            size = 6.dp,
-                            color = if
-                        )
-                    }
-                }*/
+                    PostImages(post = post.posts[it])
+                }
             }
 
-            Column(
-                modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
-            ) {
-                if (post.posts[0].caption?.isNotEmpty() == true) {
-                    Text(
-                        text = post.posts[0].caption ?: "",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+            if (post.posts.size > 1) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    (1..post.posts.size).forEach {
+                        Dot(
+                            size = 6.dp,
+                            color = if (it == current + 1) Color.White else Color.Gray
+                        )
+                    }
                 }
-                Text(
-                    text = when (post.posts[0].comments.size) {
-                        0 -> stringResource(R.string.add_comment)
-                        1 -> stringResource(id = R.string.view_comment)
-                        else -> stringResource(id = R.string.view_comments, post.posts[0].comments.size)
-                    },
-                    color = Color.Gray,
-                )
             }
+
+            CaptionSection(post = post.posts[current])
         }
     }
 }
@@ -175,7 +184,7 @@ fun PostImages(
 
     Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .width(LocalConfiguration.current.screenWidthDp.dp)
             .clip(RoundedCornerShape(cornerRadius.dp))
             .onSizeChanged {
                 outerBoxSize = Offset(it.width.toFloat(), it.height.toFloat())
@@ -295,7 +304,7 @@ fun PostLoading() {
             .padding(bottom = 16.dp)
     ) {
         Header(
-            profilePicture = "",
+            profilePicture = "https://ui-avatars.com/api/?name=&background=808080&size=100",
             userName = "",
             time = "",
             location = null,
@@ -330,6 +339,24 @@ fun Header(
 ) {
 
     val context = LocalContext.current
+    val localInspectionMode = LocalInspectionMode.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var locationName: String? by remember { mutableStateOf(null) }
+
+    LaunchedEffect(key1 = location) {
+        location?.let {
+            if (localInspectionMode) {
+                locationName = "Berlin, Germany"
+            } else {
+                coroutineScope.launch {
+                    locationName = withContext(Dispatchers.IO) {
+                        getLocation(location, context)
+                    }
+                }
+            }
+        }
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -365,14 +392,8 @@ fun Header(
                     modifier = Modifier.width((LocalConfiguration.current.screenWidthDp * 0.7f).dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
                     if (location != null) {
-                        val string: String? = if (LocalInspectionMode.current) {
-                            "Berlin, Germany"
-                        } else {
-                            getLocation(location, context)
-                        }
-                        string?.let {
+                        locationName?.let {
                             Text(
                                 maxLines = 1,
                                 modifier = Modifier
@@ -432,16 +453,43 @@ fun Header(
 
 @Composable
 fun Dot(
+    modifier: Modifier = Modifier,
     size: Dp = 4.dp,
-    color: Color = Color.Gray
+    color: Color = Color.Gray,
 ) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .padding(horizontal = 5.dp)
             .size(size)
             .clip(CircleShape)
             .background(color)
     )
+}
+
+@Composable
+fun CaptionSection(
+    post: Posts
+) {
+    Column(
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
+    ) {
+        if (post.caption?.isNotEmpty() == true) {
+            Text(
+                text = post.caption ?: "",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        Text(
+            text = when (post.comments.size) {
+                0 -> stringResource(R.string.add_comment)
+                1 -> stringResource(id = R.string.view_comment)
+                else -> stringResource(id = R.string.view_comments, post.comments.size)
+            },
+            color = Color.Gray,
+        )
+    }
 }
 
 fun getLocation(

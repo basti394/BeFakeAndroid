@@ -42,7 +42,13 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     private fun formatFeed(feedResponseDTO: FeedResponseDTO?) : FeedResponseDTO? {
-        return feedResponseDTO
+        return feedResponseDTO?.copy(
+            data = feedResponseDTO.data.copy(
+                data = feedResponseDTO.data.data?.copy(
+                    friendsPosts = feedResponseDTO.data.data.friendsPosts.map { it.copy(posts = it.posts.sortedBy { post -> post.creationDate }) }.sortedBy { it.posts.last().creationDate }
+                )
+            )
+        )
     }
 }
 
