@@ -69,7 +69,7 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+    implementation("androidx.navigation:navigation-compose:2.7.4")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("androidx.hilt:hilt-work:1.0.0")
     implementation("com.google.dagger:hilt-android:2.44")

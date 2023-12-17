@@ -320,8 +320,8 @@ fun PostImages(
             }
 
             Reactions(
-                    modifier = Modifier.align(Alignment.BottomStart),
-            reactions = post.realMojis
+                modifier = Modifier.align(Alignment.BottomStart),
+                reactions = post.realMojis
             )
 
             ActionButtons(

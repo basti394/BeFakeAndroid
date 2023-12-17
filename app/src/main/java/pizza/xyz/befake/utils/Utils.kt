@@ -22,7 +22,9 @@ import com.google.gson.reflect.TypeToken
 import pizza.xyz.befake.R
 import pizza.xyz.befake.data.LoginService
 import pizza.xyz.befake.model.countrycode.Country
+import pizza.xyz.befake.model.dtos.feed.FriendsPosts
 import pizza.xyz.befake.model.dtos.feed.Location
+import pizza.xyz.befake.model.dtos.feed.Moment
 import pizza.xyz.befake.model.dtos.feed.Posts
 import pizza.xyz.befake.model.dtos.feed.Primary
 import pizza.xyz.befake.model.dtos.feed.ProfilePicture
@@ -142,7 +144,7 @@ object Utils {
             height = 2000,
             mediaType = "image"
         ),
-        comments = listOf(),
+        comments = emptyList(),
         location = Location(
             latitude = 52.5207,
             longitude = 13.3733
@@ -163,7 +165,34 @@ object Utils {
                 emoji = "👍",
                 isInstant = true,
                 postedAt = "2021-09-18T12:00:00.000Z"
-            )
+            ),
+            RealMojis(
+                id = "1",
+                user = testFeedUser,
+                media = pizza.xyz.befake.model.dtos.feed.Media(
+                    url = "https://picsum.photos/1500/2000",
+                    width = 1500,
+                    height = 2000,
+                ),
+                type = "image",
+                emoji = "👍",
+                isInstant = true,
+                postedAt = "2021-09-18T12:00:00.000Z"
+            ),
+            RealMojis(
+                id = "1",
+                user = testFeedUser,
+                media = pizza.xyz.befake.model.dtos.feed.Media(
+                    url = "https://picsum.photos/1500/2000",
+                    width = 1500,
+                    height = 2000,
+                ),
+                type = "image",
+                emoji = "👍",
+                isInstant = true,
+                postedAt = "2021-09-18T12:00:00.000Z"
+            ),
+
         ),
         tags = emptyList(),
         creationDate = "2021-09-18T12:00:00.000Z",
@@ -198,6 +227,21 @@ object Utils {
         updatedAt = "2021-09-18T12:00:00.000Z",
         visibility = emptyList(),
         lateInSeconds = 0
+    )
+
+    val testMoment = Moment(
+        id = "1",
+        region = "Berlin"
+    )
+
+    val testFriendsPosts = FriendsPosts(
+        user = testFeedUser,
+        posts = listOf(
+            testFeedPostLateThreeMinLocationBerlin,
+        ),
+        region = "Berlin",
+        moment = testMoment,
+        momentId = "1"
     )
 
     const val countries = """

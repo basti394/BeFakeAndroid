@@ -15,11 +15,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 import pizza.xyz.befake.ui.composables.BeFakeTopAppBar
 import pizza.xyz.befake.ui.screens.HomeScreen
 import pizza.xyz.befake.ui.screens.LoginScreen
+import pizza.xyz.befake.ui.screens.PostDetailScreen
 import pizza.xyz.befake.ui.theme.BeFakeTheme
 import pizza.xyz.befake.ui.viewmodel.LoginScreenViewModel
 import pizza.xyz.befake.ui.viewmodel.LoginState
@@ -50,22 +55,44 @@ class MainActivity : ComponentActivity() {
 fun MainContent(
     loginState: LoginState
 ) {
-    Scaffold(
-        topBar = {
-            BeFakeTopAppBar(
-                loginState
-            )
-         },
-    ) { paddingValues ->
-        Surface(
-            modifier = Modifier
-                .fillMaxSize(),
-            color = Color.Black
-        ) {
-            if (loginState != LoginState.LoggedIn) {
+    if (
+        loginState != LoginState.LoggedIn
+    ) {
+        Scaffold(
+            topBar = {
+                BeFakeTopAppBar(
+                    loginState
+                )
+            },
+            containerColor = Color.Black
+        ) { paddingValues ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize(),
+            ) {
                 LoginScreen(paddingValues = paddingValues)
-            } else {
-                HomeScreen(paddingValues = paddingValues)
+            }
+        }
+    } else {
+        val navController: NavHostController = rememberNavController()
+        Scaffold(
+            topBar = {
+                BeFakeTopAppBar(
+                    loginState
+                )
+            },
+            containerColor = Color.Black
+        ) { paddingValues ->
+            NavHost(
+                navController = navController,
+                startDestination = "home"
+            ) {
+                composable("home") {
+                    HomeScreen(paddingValues = paddingValues)
+                }
+                composable("post/{username}") {
+                    PostDetailScreen(post = )
+                }
             }
         }
     }
