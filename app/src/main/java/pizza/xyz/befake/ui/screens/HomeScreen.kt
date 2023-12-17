@@ -23,9 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import pizza.xyz.befake.Utils.testFeedPostLateThreeMinLocationBerlin
-import pizza.xyz.befake.Utils.testFeedPostNoLocation
-import pizza.xyz.befake.Utils.testFeedUser
 import pizza.xyz.befake.model.dtos.feed.Data
 import pizza.xyz.befake.model.dtos.feed.FeedResponseDTO
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
@@ -45,6 +42,9 @@ import pizza.xyz.befake.ui.theme.BeFakeTheme
 import pizza.xyz.befake.ui.viewmodel.HomeScreenState
 import pizza.xyz.befake.ui.viewmodel.HomeScreenViewModel
 import pizza.xyz.befake.ui.viewmodel.LoginState
+import pizza.xyz.befake.utils.Utils.testFeedPostLateThreeMinLocationBerlin
+import pizza.xyz.befake.utils.Utils.testFeedPostNoLocation
+import pizza.xyz.befake.utils.Utils.testFeedUser
 
 @Composable
 fun HomeScreen(
@@ -54,17 +54,20 @@ fun HomeScreen(
 
     val feed by homeScreenViewModel.feed.collectAsStateWithLifecycle()
     val state by homeScreenViewModel.state.collectAsStateWithLifecycle()
+    val myProfilePicture by homeScreenViewModel.myProfilePicture.collectAsStateWithLifecycle()
 
     HomeScreenContent(
         feed = feed,
-        state = state
+        state = state,
+        myProfilePicture = myProfilePicture
     )
 }
 
 @Composable
 fun HomeScreenContent(
     feed: FeedResponseDTO?,
-    state: HomeScreenState
+    state: HomeScreenState,
+    myProfilePicture: String
 ) {
 
     val list = feed?.data?.data?.friendsPosts?.reversed()
@@ -89,6 +92,7 @@ fun HomeScreenContent(
                     Post(
                         post = list?.get(it),
                         modifier = Modifier.padding(vertical = 8.dp),
+                        myProfilePicture = myProfilePicture
                     )
                 }
             }
@@ -236,7 +240,8 @@ fun HomeScreenPreview() {
             ) {
                 HomeScreenContent(
                     feed = feed,
-                    state = HomeScreenState.Loaded
+                    state = HomeScreenState.Loaded,
+                    myProfilePicture = "https://picsum.photos/1000/1000"
                 )
             }
         }
@@ -269,7 +274,8 @@ fun HomeScreenLoadingPreview() {
             ) {
                 HomeScreenContent(
                     feed = null,
-                    state = HomeScreenState.Loading
+                    state = HomeScreenState.Loading,
+                    myProfilePicture = "https://picsum.photos/1000/1000"
                 )
             }
         }

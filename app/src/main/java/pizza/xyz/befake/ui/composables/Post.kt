@@ -12,7 +12,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,6 +29,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.TagFaces
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,18 +70,21 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import pizza.xyz.befake.R
-import pizza.xyz.befake.Utils.debugPlaceholderPost
-import pizza.xyz.befake.Utils.debugPlaceholderProfilePicture
-import pizza.xyz.befake.Utils.shimmerBrush
-import pizza.xyz.befake.Utils.testFeedPostLateThreeMinLocationBerlin
-import pizza.xyz.befake.Utils.testFeedPostNoLocation
-import pizza.xyz.befake.Utils.testFeedUser
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
 import pizza.xyz.befake.model.dtos.feed.Location
 import pizza.xyz.befake.model.dtos.feed.Moment
 import pizza.xyz.befake.model.dtos.feed.Posts
-import java.text.SimpleDateFormat
+import pizza.xyz.befake.model.dtos.feed.RealMojis
+import pizza.xyz.befake.utils.Utils.debugPlaceholderPost
+import pizza.xyz.befake.utils.Utils.debugPlaceholderProfilePicture
+import pizza.xyz.befake.utils.Utils.shimmerBrush
+import pizza.xyz.befake.utils.Utils.testFeedPostLateThreeMinLocationBerlin
+import pizza.xyz.befake.utils.Utils.testFeedPostNoLocation
+import pizza.xyz.befake.utils.Utils.testFeedUser
+import pizza.xyz.befake.utils.rememberCustomFlingBehaviour
+import java.time.Instant
 import java.util.Locale
+import java.util.TimeZone
 import kotlin.math.roundToInt
 
 const val borderMargin = 50f
@@ -90,6 +95,7 @@ const val cornerRadius = 16
 fun Post(
     modifier: Modifier = Modifier,
     post: FriendsPosts?,
+    myProfilePicture: String
 ) {
 
     val state = rememberLazyListState()
@@ -102,7 +108,16 @@ fun Post(
         mutableIntStateOf(post?.posts?.size?.minus(1) ?: 0)
     }
     
-    val flingBehavior = rememberSnapFlingBehavior(lazyListState = state)
+    val flingBehavior = rememberCustomFlingBehaviour(
+        lazyListState = state,
+        onFling = { velocity ->
+            current = if (velocity < 0) {
+                (current - 1).coerceAtLeast(0)
+            } else {
+                (current + 1).coerceAtMost(post?.posts?.size?.minus(1) ?: 0)
+            }
+        }
+    )
 
     if (post == null) {
         Spacer(modifier = modifier.fillMaxSize())
@@ -113,8 +128,17 @@ fun Post(
         val profilePicture = remember {
             if (profilePictureUrl != "") profilePictureUrl else "https://ui-avatars.com/api/?name=${userName.first()}&background=random&size=100"
         }
-        val time = remember {
+        val time = remember(current) {
             post.posts[current].takenAt
+        }
+        val location = remember(current) {
+            post.posts[current].location
+        }
+        val isLate = remember(current) {
+            post.posts[current].isLate
+        }
+        val lateInSeconds = remember(current) {
+            post.posts[current].lateInSeconds
         }
 
         Column(
@@ -124,9 +148,9 @@ fun Post(
                 profilePicture = profilePicture,
                 userName = userName,
                 time = time,
-                location = post.posts[current].location,
-                isLate = post.posts[current].isLate,
-                lateInSeconds = post.posts[current].lateInSeconds
+                location = location,
+                isLate = isLate,
+                lateInSeconds = lateInSeconds
             )
 
             LazyRow(
@@ -160,7 +184,7 @@ fun Post(
                 }
             }
 
-            CaptionSection(post = post.posts[current])
+            CaptionSection(post = post.posts[current], myProfilePicture = myProfilePicture)
         }
     }
 }
@@ -204,6 +228,8 @@ fun PostImages(
         var offsetX by remember { mutableFloatStateOf(borderMargin) }
         var offsetY by remember { mutableFloatStateOf(borderMargin) }
 
+
+
         AsyncImage(
             model = secondary,
             contentDescription = "primary",
@@ -223,7 +249,8 @@ fun PostImages(
             Box(
                 modifier = Modifier
                     .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-                    .size(160.dp)
+                    .height(160.dp)
+                    .width(150.dp)
                     .align(Alignment.TopStart)
                     .pointerInput(Unit) {
                         val boxSize = this.size
@@ -293,6 +320,103 @@ fun PostImages(
             }
         }
 
+        Reactions(
+            modifier = Modifier.align(Alignment.BottomStart),
+            reactions = post.realMojis
+        )
+
+        ActionButtons(
+            modifier = Modifier.align(Alignment.BottomEnd)
+        )
+    }
+}
+
+@Composable
+fun Reactions(
+    modifier: Modifier = Modifier,
+    reactions: List<RealMojis>
+) {
+    Box(
+        modifier = modifier
+            .padding(16.dp)
+            .fillMaxWidth(),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        val reactionsPreview = reactions.takeLast(2)
+        val rest = reactions.size - reactionsPreview.size
+        if (rest > 0) {
+            Box(
+                modifier = modifier
+                    .padding(start = 25.dp * (reactionsPreview.size))
+                    .border(2.dp, Color.Black, CircleShape)
+                    .clip(CircleShape)
+                    .background(Color.DarkGray)
+                    .size(35.dp)
+            ) {
+                Text(
+                    modifier = Modifier.align(Alignment.Center),
+                    text = "+$rest",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal
+                )
+            }
+        }
+        reactionsPreview.forEachIndexed { index, realMoji ->
+            val padding = 25.dp * (reactionsPreview.size - (index + 1))
+            Box(
+                modifier = modifier
+                    .padding(start = padding)
+                    .border(2.dp, Color.Black, CircleShape)
+                    .clip(CircleShape)
+                    .background(Color.Black)
+                    .size(35.dp)
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(35.dp)
+                        .clip(CircleShape),
+                    placeholder = debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
+                    model = realMoji.media.url,
+                    contentDescription = "profilePicture"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ActionButtons(
+    modifier: Modifier = Modifier
+) {
+    val iconSize = remember { 35.dp }
+    Box(
+        modifier = modifier
+            .padding(10.dp),
+    ) {
+        Column {
+            IconButton(
+                onClick = { /*TODO*/ }
+            ) {
+                Icon(
+                    modifier = Modifier.size(iconSize),
+                    imageVector = Icons.Filled.ChatBubble,
+                    contentDescription = "Comments",
+                    tint = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            IconButton(
+                onClick = { /*TODO*/ }
+            ) {
+                Icon(
+                    modifier = Modifier.size(iconSize),
+                    imageVector = Icons.Filled.TagFaces,
+                    contentDescription = "More",
+                    tint = Color.White
+                )
+            }
+        }
     }
 }
 
@@ -301,7 +425,7 @@ fun PostLoading() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp)
+            .padding(vertical = 8.dp)
     ) {
         Header(
             profilePicture = "https://ui-avatars.com/api/?name=&background=808080&size=100",
@@ -378,15 +502,11 @@ fun Header(
             Column(
                  modifier = Modifier.padding(start = 8.dp)
             ) {
-
-                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-                val outputDateFormat = SimpleDateFormat("HH:mm")
-
                 Text(
-                      text = userName,
-                      color = Color.White,
-                      fontSize = 16.sp,
-                      fontWeight = FontWeight.SemiBold
+                    text = userName,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
                 Row(
                     modifier = Modifier.width((LocalConfiguration.current.screenWidthDp * 0.7f).dp),
@@ -418,7 +538,7 @@ fun Header(
                         Text(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            text = inputFormat.parse(time)?.let { outputDateFormat.format(it) } ?: time,
+                            text = getTime(time),
                             color = Color.Gray,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal
@@ -451,6 +571,12 @@ fun Header(
     }
 }
 
+fun getTime(time: String): String {
+    val date = Instant.parse(time)
+    val localDate = date.atZone(TimeZone.getDefault().toZoneId()).toLocalDateTime()
+    return if (localDate.hour < 10) "0${localDate.hour}" else localDate.hour.toString() + ":" + if (localDate.minute < 10) "0${localDate.minute}" else localDate.minute.toString()
+}
+
 @Composable
 fun Dot(
     modifier: Modifier = Modifier,
@@ -468,27 +594,43 @@ fun Dot(
 
 @Composable
 fun CaptionSection(
-    post: Posts
+    post: Posts,
+    myProfilePicture: String,
 ) {
     Column(
         modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
     ) {
         if (post.caption?.isNotEmpty() == true) {
             Text(
-                text = post.caption ?: "",
+                text = post.caption,
                 color = Color.White,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.Normal
             )
         }
-        Text(
-            text = when (post.comments.size) {
-                0 -> stringResource(R.string.add_comment)
-                1 -> stringResource(id = R.string.view_comment)
-                else -> stringResource(id = R.string.view_comments, post.comments.size)
-            },
-            color = Color.Gray,
-        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(CircleShape),
+                placeholder = debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
+                model = myProfilePicture,
+                contentDescription = "profilePicture"
+            )
+            Text(
+                modifier = Modifier.padding(start = 8.dp),
+                text = when (post.comments.size) {
+                    0 -> stringResource(R.string.add_comment)
+                    1 -> stringResource(id = R.string.view_comment)
+                    else -> stringResource(id = R.string.view_comments, post.comments.size)
+                },
+                color = Color.Gray,
+            )
+        }
+
     }
 }
 
@@ -553,10 +695,11 @@ fun PostPreview() {
         posts = listOf(
             testFeedPostLateThreeMinLocationBerlin,
             testFeedPostNoLocation
-        )
+        ),
     )
 
     Post(
         post = friendsPost,
+        myProfilePicture = "https://ui-avatars.com/api/?name=&background=808080&size=100"
     )
 }

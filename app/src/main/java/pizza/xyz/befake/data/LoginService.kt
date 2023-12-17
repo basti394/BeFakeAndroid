@@ -8,13 +8,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import pizza.xyz.befake.R
-import pizza.xyz.befake.Utils
 import pizza.xyz.befake.model.dtos.login.LoginRequestDTO
 import pizza.xyz.befake.model.dtos.login.LoginResultDTO
 import pizza.xyz.befake.model.dtos.refresh.RefreshTokenRequestDTO
 import pizza.xyz.befake.model.dtos.verify.VerifyOTPRequestDTO
 import pizza.xyz.befake.model.dtos.verify.VerifyOTPResponseDTO
 import pizza.xyz.befake.ui.viewmodel.LoginState
+import pizza.xyz.befake.utils.Utils
 import retrofit2.http.Body
 import retrofit2.http.POST
 import javax.inject.Inject

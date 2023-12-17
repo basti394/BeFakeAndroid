@@ -11,9 +11,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
-import pizza.xyz.befake.Utils.BASE_URL
-import pizza.xyz.befake.Utils.dataStore
-import retrofit2.HttpException
+import pizza.xyz.befake.utils.Utils.BASE_URL
+import pizza.xyz.befake.utils.Utils.dataStore
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
@@ -22,6 +21,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class BeFakeModule {
 
+    @Singleton
     @Binds
     abstract fun bindLoginService(
         loginServiceImpl: LoginServiceImpl

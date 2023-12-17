@@ -2,14 +2,12 @@ package pizza.xyz.befake.data
 
 import android.content.Context
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
-import pizza.xyz.befake.Utils.TOKEN
-import pizza.xyz.befake.Utils.dataStore
-import pizza.xyz.befake.ui.viewmodel.LoginScreenViewModel
+import pizza.xyz.befake.utils.Utils.TOKEN
+import pizza.xyz.befake.utils.Utils.dataStore
 import javax.inject.Inject
 
 class TokenInterceptor @Inject constructor(

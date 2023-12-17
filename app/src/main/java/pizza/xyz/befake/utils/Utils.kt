@@ -1,4 +1,4 @@
-package pizza.xyz.befake
+package pizza.xyz.befake.utils
 
 import android.content.Context
 import androidx.annotation.DrawableRes
@@ -19,12 +19,14 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import pizza.xyz.befake.R
 import pizza.xyz.befake.data.LoginService
 import pizza.xyz.befake.model.countrycode.Country
 import pizza.xyz.befake.model.dtos.feed.Location
 import pizza.xyz.befake.model.dtos.feed.Posts
 import pizza.xyz.befake.model.dtos.feed.Primary
 import pizza.xyz.befake.model.dtos.feed.ProfilePicture
+import pizza.xyz.befake.model.dtos.feed.RealMojis
 import pizza.xyz.befake.model.dtos.feed.Secondary
 import pizza.xyz.befake.model.dtos.feed.User
 import java.lang.reflect.Type
@@ -148,7 +150,21 @@ object Utils {
         retakeCounter = 0,
         isLate = true,
         isMain = true,
-        realMojis = emptyList(),
+        realMojis = listOf(
+            RealMojis(
+                id = "1",
+                user = testFeedUser,
+                media = pizza.xyz.befake.model.dtos.feed.Media(
+                    url = "https://picsum.photos/1500/2000",
+                    width = 1500,
+                    height = 2000,
+                ),
+                type = "image",
+                emoji = "👍",
+                isInstant = true,
+                postedAt = "2021-09-18T12:00:00.000Z"
+            )
+        ),
         tags = emptyList(),
         creationDate = "2021-09-18T12:00:00.000Z",
         updatedAt = "2021-09-18T12:00:00.000Z",

@@ -36,9 +36,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import pizza.xyz.befake.R
-import pizza.xyz.befake.Utils.debugPlaceholderProfilePicture
 import pizza.xyz.befake.ui.viewmodel.BeFakeTopAppBarViewModel
 import pizza.xyz.befake.ui.viewmodel.LoginState
+import pizza.xyz.befake.utils.Utils.debugPlaceholderProfilePicture
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
