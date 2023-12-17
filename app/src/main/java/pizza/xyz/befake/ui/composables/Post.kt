@@ -318,16 +318,16 @@ fun PostImages(
                     )
                 }
             }
-        }
 
-        Reactions(
-            modifier = Modifier.align(Alignment.BottomStart),
+            Reactions(
+                    modifier = Modifier.align(Alignment.BottomStart),
             reactions = post.realMojis
-        )
+            )
 
-        ActionButtons(
-            modifier = Modifier.align(Alignment.BottomEnd)
-        )
+            ActionButtons(
+                modifier = Modifier.align(Alignment.BottomEnd)
+            )
+        }
     }
 }
 
