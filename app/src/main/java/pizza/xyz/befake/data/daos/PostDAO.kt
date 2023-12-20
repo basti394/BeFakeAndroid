@@ -1,6 +1,7 @@
 package pizza.xyz.befake.data.daos
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +14,9 @@ interface PostDAO {
     fun getPostData(): Flow<Post>
 
 
-    @Update
+    @Insert
     fun insertPostData(post: Post)
+
+    @Update
+    fun updatePostData(post: Post)
 }

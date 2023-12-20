@@ -83,7 +83,19 @@ fun MainContent(
             navController = navController,
             startDestination = "home"
         ) {
-            composable("home") {
+            composable(
+                "home",
+                enterTransition = {
+                    return@composable slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.End, tween(100)
+                    )
+                },
+                exitTransition = {
+                    return@composable slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Start, tween(200)
+                    )
+                }
+            ) {
 
                 Scaffold(
                     topBar = {
@@ -95,7 +107,7 @@ fun MainContent(
                 ) { paddingValues ->
                     HomeScreen(
                         paddingValues = paddingValues,
-                        navController = navController
+                        openDetailScreen = { username -> navController.navigate("post/$username") }
                     )
                 }
             }
@@ -119,7 +131,7 @@ fun MainContent(
             ) {
                 val username = it.arguments?.getString("username")
                 if (username.isNullOrBlank()) throw IllegalStateException("Username cannot be null or blank")
-                PostDetailScreen(username = username, navController = navController)
+                PostDetailScreen(username = username, onBack = { navController.popBackStack() })
             }
         }
 

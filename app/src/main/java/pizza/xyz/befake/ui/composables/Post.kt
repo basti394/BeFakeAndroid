@@ -188,7 +188,11 @@ fun Post(
                 }
             }
 
-            CaptionSection(post = post.posts[current], myProfilePicture = myProfilePicture)
+            CaptionSection(
+                post = post.posts[current],
+                myProfilePicture = myProfilePicture,
+                openDetailScreen = { openDetailScreen(post.user.username) }
+            )
         }
     }
 }
@@ -484,7 +488,11 @@ fun Header(
             } else {
                 coroutineScope.launch {
                     locationName = withContext(Dispatchers.IO) {
-                        getLocation(location, context)
+                        try {
+                            getLocation(location, context)
+                        } catch (e: Exception) {
+                            null
+                        }
                     }
                 }
             }
@@ -605,6 +613,7 @@ fun Dot(
 fun CaptionSection(
     post: Posts,
     myProfilePicture: String,
+    openDetailScreen: () -> Unit
 ) {
     Column(
         modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
@@ -619,6 +628,7 @@ fun CaptionSection(
         }
         Spacer(modifier = Modifier.height(8.dp))
         Row(
+            modifier = Modifier.clickable { openDetailScreen() },
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(

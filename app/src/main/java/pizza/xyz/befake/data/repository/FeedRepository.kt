@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 interface FeedRepository {
 
-    val feed: Flow<Post>
+    fun getFeed(): Flow<Post>
 
     suspend fun updateFeed()
 
@@ -28,16 +28,24 @@ class FeedRepositoryImpl @Inject constructor(
     private val loginService: LoginService
 ) : FeedRepository {
 
-    override val feed: Flow<Post>
-        get() = postDAO.getPostData().map { if (it != null) formatFeed(it.data, it.id) else it }
+    override fun getFeed(): Flow<Post> {
+        return postDAO.getPostData()
+    }
 
     override suspend fun updateFeed() {
-        val id = postDAO.getPostData().map { if (it != null) it.id else UUID.randomUUID() }.first()
+        val existingPost = postDAO.getPostData().first()
 
         suspend { friendsService.feed() }.handle(
             onSuccess = {
                 it.data.data?.let { data ->
-                    postDAO.insertPostData(Post(id, data))
+                    if (existingPost != null) {
+                        postDAO.updatePostData(formatFeed(data, existingPost.id))
+                        return@handle
+                    } else {
+                        val id = UUID.randomUUID()
+                        postDAO.insertPostData(Post(id, data))
+                        return@handle
+                    }
                 }
             },
             loginService = loginService
@@ -45,7 +53,7 @@ class FeedRepositoryImpl @Inject constructor(
     }
 
     override fun getPostByUsername(username: String): Flow<FriendsPosts?> {
-        return feed.map { it.data.friendsPosts.find { it.user.username == username } }
+        return getFeed().map { it.data.friendsPosts.find { it.user.username == username } }
     }
 
     private fun formatFeed(postData: PostData, id: UUID) : Post {

@@ -17,14 +17,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import pizza.xyz.befake.model.dtos.feed.Data
 import pizza.xyz.befake.model.dtos.feed.FeedResponseDTO
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
@@ -52,21 +50,19 @@ import pizza.xyz.befake.utils.Utils.testFeedUser
 fun HomeScreen(
     paddingValues: PaddingValues,
     homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
-    navController: NavHostController
+    openDetailScreen: (String) -> Unit
 ) {
 
     val feed by homeScreenViewModel.feed.collectAsStateWithLifecycle()
     val state by homeScreenViewModel.state.collectAsStateWithLifecycle()
     val myProfilePicture by homeScreenViewModel.myProfilePicture.collectAsStateWithLifecycle()
 
-    feed?.let {
-        HomeScreenContent(
-            feed = it,
-            state = state,
-            myProfilePicture = myProfilePicture,
-            navController = navController
-        )
-    }
+    HomeScreenContent(
+        feed = feed?.data,
+        state = state,
+        myProfilePicture = myProfilePicture,
+        openDetailScreen = openDetailScreen
+    )
 }
 
 @Composable
@@ -74,7 +70,7 @@ fun HomeScreenContent(
     feed: PostData?,
     state: HomeScreenState,
     myProfilePicture: String,
-    navController: NavHostController
+    openDetailScreen: (String) -> Unit
 ) {
 
     val list = feed?.friendsPosts?.reversed()
@@ -85,12 +81,13 @@ fun HomeScreenContent(
     ) {
         val count = list?.size ?: 3
         item { Spacer(modifier = Modifier.height(100.dp)) }
-        when(state) {
+        when (state) {
             is HomeScreenState.Loading -> {
                 items(4) {
                     PostLoading()
                 }
             }
+
             is HomeScreenState.Loaded -> {
                 items(
                     count = count,
@@ -100,12 +97,11 @@ fun HomeScreenContent(
                         post = list?.get(it),
                         modifier = Modifier.padding(vertical = 8.dp),
                         myProfilePicture = myProfilePicture,
-                        openDetailScreen = { username ->
-                            navController.navigate("post/$username")
-                        }
+                        openDetailScreen = openDetailScreen
                     )
                 }
             }
+
             is HomeScreenState.Error -> {
                 item {
                     Text(
@@ -252,7 +248,7 @@ fun HomeScreenPreview() {
                     feed = feed.data.data,
                     state = HomeScreenState.Loaded,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    navController = NavHostController(LocalContext.current)
+                    openDetailScreen = {}
                 )
             }
         }
@@ -287,7 +283,7 @@ fun HomeScreenLoadingPreview() {
                     feed = null,
                     state = HomeScreenState.Loading,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    navController = NavHostController(LocalContext.current)
+                    openDetailScreen = {}
                 )
             }
         }
