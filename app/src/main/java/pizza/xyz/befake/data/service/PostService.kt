@@ -1,4 +1,4 @@
-package pizza.xyz.befake.data
+package pizza.xyz.befake.data.service
 
 import javax.inject.Inject
 import javax.inject.Singleton

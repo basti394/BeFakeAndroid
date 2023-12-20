@@ -1,4 +1,4 @@
-package pizza.xyz.befake.data
+package pizza.xyz.befake.data.service
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences

@@ -17,12 +17,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import pizza.xyz.befake.model.dtos.feed.Data
 import pizza.xyz.befake.model.dtos.feed.FeedResponseDTO
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
@@ -49,28 +51,33 @@ import pizza.xyz.befake.utils.Utils.testFeedUser
 @Composable
 fun HomeScreen(
     paddingValues: PaddingValues,
-    homeScreenViewModel: HomeScreenViewModel = hiltViewModel()
+    homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
+    navController: NavHostController
 ) {
 
     val feed by homeScreenViewModel.feed.collectAsStateWithLifecycle()
     val state by homeScreenViewModel.state.collectAsStateWithLifecycle()
     val myProfilePicture by homeScreenViewModel.myProfilePicture.collectAsStateWithLifecycle()
 
-    HomeScreenContent(
-        feed = feed,
-        state = state,
-        myProfilePicture = myProfilePicture
-    )
+    feed?.let {
+        HomeScreenContent(
+            feed = it,
+            state = state,
+            myProfilePicture = myProfilePicture,
+            navController = navController
+        )
+    }
 }
 
 @Composable
 fun HomeScreenContent(
-    feed: FeedResponseDTO?,
+    feed: PostData?,
     state: HomeScreenState,
-    myProfilePicture: String
+    myProfilePicture: String,
+    navController: NavHostController
 ) {
 
-    val list = feed?.data?.data?.friendsPosts?.reversed()
+    val list = feed?.friendsPosts?.reversed()
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -92,7 +99,10 @@ fun HomeScreenContent(
                     Post(
                         post = list?.get(it),
                         modifier = Modifier.padding(vertical = 8.dp),
-                        myProfilePicture = myProfilePicture
+                        myProfilePicture = myProfilePicture,
+                        openDetailScreen = { username ->
+                            navController.navigate("post/$username")
+                        }
                     )
                 }
             }
@@ -239,9 +249,10 @@ fun HomeScreenPreview() {
                 color = Color.Black
             ) {
                 HomeScreenContent(
-                    feed = feed,
+                    feed = feed.data.data,
                     state = HomeScreenState.Loaded,
-                    myProfilePicture = "https://picsum.photos/1000/1000"
+                    myProfilePicture = "https://picsum.photos/1000/1000",
+                    navController = NavHostController(LocalContext.current)
                 )
             }
         }
@@ -275,7 +286,8 @@ fun HomeScreenLoadingPreview() {
                 HomeScreenContent(
                     feed = null,
                     state = HomeScreenState.Loading,
-                    myProfilePicture = "https://picsum.photos/1000/1000"
+                    myProfilePicture = "https://picsum.photos/1000/1000",
+                    navController = NavHostController(LocalContext.current)
                 )
             }
         }

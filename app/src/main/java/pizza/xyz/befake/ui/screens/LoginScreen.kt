@@ -59,7 +59,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import pizza.xyz.befake.R
-import pizza.xyz.befake.model.countrycode.Country
+import pizza.xyz.befake.model.dtos.countrycode.Country
 import pizza.xyz.befake.ui.composables.CountryCodeSelectionSheet
 import pizza.xyz.befake.ui.viewmodel.LoginScreenViewModel
 import pizza.xyz.befake.ui.viewmodel.LoginState

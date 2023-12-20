@@ -1,4 +1,4 @@
-package pizza.xyz.befake.data
+package pizza.xyz.befake.data.service
 
 import android.content.Context
 import kotlinx.coroutines.flow.first

@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import pizza.xyz.befake.data.FriendsService
-import pizza.xyz.befake.data.LoginService
+import pizza.xyz.befake.data.service.FriendsService
+import pizza.xyz.befake.data.service.LoginService
 import pizza.xyz.befake.model.dtos.me.ProfilePicture
 import pizza.xyz.befake.utils.Utils.handle
 import javax.inject.Inject

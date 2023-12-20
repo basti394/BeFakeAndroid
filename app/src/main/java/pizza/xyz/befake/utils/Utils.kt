@@ -20,8 +20,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import pizza.xyz.befake.R
-import pizza.xyz.befake.data.LoginService
-import pizza.xyz.befake.model.countrycode.Country
+import pizza.xyz.befake.data.service.LoginService
+import pizza.xyz.befake.model.dtos.countrycode.Country
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
 import pizza.xyz.befake.model.dtos.feed.Location
 import pizza.xyz.befake.model.dtos.feed.Moment

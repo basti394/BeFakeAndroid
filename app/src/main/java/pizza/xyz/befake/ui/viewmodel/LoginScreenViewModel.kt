@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import pizza.xyz.befake.R
-import pizza.xyz.befake.data.LoginService
-import pizza.xyz.befake.model.countrycode.Country
+import pizza.xyz.befake.data.service.LoginService
+import pizza.xyz.befake.model.dtos.countrycode.Country
 import pizza.xyz.befake.model.dtos.login.LoginRequestDTO
 import pizza.xyz.befake.model.dtos.verify.VerifyOTPRequestDTO
 import pizza.xyz.befake.utils.Utils.getCountries

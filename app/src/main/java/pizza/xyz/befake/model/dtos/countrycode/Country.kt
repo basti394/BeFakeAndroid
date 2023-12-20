@@ -1,4 +1,4 @@
-package pizza.xyz.befake.model.countrycode
+package pizza.xyz.befake.model.dtos.countrycode
 
 import com.google.gson.annotations.SerializedName
 

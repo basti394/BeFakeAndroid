@@ -95,7 +95,8 @@ const val cornerRadius = 16
 fun Post(
     modifier: Modifier = Modifier,
     post: FriendsPosts?,
-    myProfilePicture: String
+    myProfilePicture: String,
+    openDetailScreen: (String) -> Unit
 ) {
 
     val state = rememberLazyListState()
@@ -164,7 +165,10 @@ fun Post(
                     post.posts.size,
                     key = { it }
                 ) {
-                    PostImages(post = post.posts[it])
+                    PostImages(
+                        post = post.posts[it],
+                        openDetailScreen = { openDetailScreen(post.user.username) }
+                    )
                 }
             }
 
@@ -192,6 +196,7 @@ fun Post(
 @Composable
 fun PostImages(
     post: Posts,
+    openDetailScreen: () -> Unit
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -320,12 +325,15 @@ fun PostImages(
             }
 
             Reactions(
-                modifier = Modifier.align(Alignment.BottomStart),
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .clickable { openDetailScreen() },
                 reactions = post.realMojis
             )
 
             ActionButtons(
-                modifier = Modifier.align(Alignment.BottomEnd)
+                modifier = Modifier.align(Alignment.BottomEnd),
+                openDetailScreen = { openDetailScreen() }
             )
         }
     }
@@ -387,7 +395,8 @@ fun Reactions(
 
 @Composable
 fun ActionButtons(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    openDetailScreen: () -> Unit
 ) {
     val iconSize = remember { 35.dp }
     Box(
@@ -396,7 +405,7 @@ fun ActionButtons(
     ) {
         Column {
             IconButton(
-                onClick = { /*TODO*/ }
+                onClick = openDetailScreen
             ) {
                 Icon(
                     modifier = Modifier.size(iconSize),
@@ -407,7 +416,7 @@ fun ActionButtons(
             }
             Spacer(modifier = Modifier.height(8.dp))
             IconButton(
-                onClick = { /*TODO*/ }
+                onClick = openDetailScreen
             ) {
                 Icon(
                     modifier = Modifier.size(iconSize),
@@ -700,6 +709,7 @@ fun PostPreview() {
 
     Post(
         post = friendsPost,
-        myProfilePicture = "https://ui-avatars.com/api/?name=&background=808080&size=100"
+        myProfilePicture = "https://ui-avatars.com/api/?name=&background=808080&size=100",
+        openDetailScreen = {}
     )
 }

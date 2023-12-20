@@ -4,6 +4,8 @@ import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
@@ -19,6 +21,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 import pizza.xyz.befake.ui.composables.BeFakeTopAppBar
@@ -75,25 +78,50 @@ fun MainContent(
         }
     } else {
         val navController: NavHostController = rememberNavController()
-        Scaffold(
-            topBar = {
-                BeFakeTopAppBar(
-                    loginState
-                )
-            },
-            containerColor = Color.Black
-        ) { paddingValues ->
-            NavHost(
-                navController = navController,
-                startDestination = "home"
-            ) {
-                composable("home") {
-                    HomeScreen(paddingValues = paddingValues)
-                }
-                composable("post/{username}") {
-                    PostDetailScreen(post = )
+
+        NavHost(
+            navController = navController,
+            startDestination = "home"
+        ) {
+            composable("home") {
+
+                Scaffold(
+                    topBar = {
+                        BeFakeTopAppBar(
+                            loginState
+                        )
+                    },
+                    containerColor = Color.Black
+                ) { paddingValues ->
+                    HomeScreen(
+                        paddingValues = paddingValues,
+                        navController = navController
+                    )
                 }
             }
+            composable(
+                "post/{username}",
+                arguments = listOf(
+                    navArgument("username") {
+                        defaultValue = ""
+                    }
+                ),
+                exitTransition = {
+                    return@composable slideOutOfContainer(
+                        AnimatedContentTransitionScope.SlideDirection.End, tween(100)
+                    )
+                },
+                enterTransition = {
+                    return@composable slideIntoContainer(
+                        AnimatedContentTransitionScope.SlideDirection.Start, tween(200)
+                    )
+                }
+            ) {
+                val username = it.arguments?.getString("username")
+                if (username.isNullOrBlank()) throw IllegalStateException("Username cannot be null or blank")
+                PostDetailScreen(username = username, navController = navController)
+            }
         }
+
     }
 }

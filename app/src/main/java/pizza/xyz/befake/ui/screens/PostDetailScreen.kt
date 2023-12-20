@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -33,33 +35,45 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import pizza.xyz.befake.R
 import pizza.xyz.befake.model.dtos.feed.Comment
-import pizza.xyz.befake.model.dtos.feed.FriendsPosts
 import pizza.xyz.befake.model.dtos.feed.Posts
 import pizza.xyz.befake.model.dtos.feed.RealMojis
+import pizza.xyz.befake.ui.viewmodel.PostDetailScreenViewModel
 import pizza.xyz.befake.utils.Utils
-import pizza.xyz.befake.utils.Utils.testFriendsPosts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostDetailScreen(
-    post: FriendsPosts,
+    username: String,
+    viewModel: PostDetailScreenViewModel = hiltViewModel(),
+    navController: NavController
 ) {
 
+    val post by viewModel.post.collectAsStateWithLifecycle()
+
     var current by remember {
-        mutableIntStateOf(post.posts.size.minus(1))
+        mutableIntStateOf(post?.posts?.size?.minus(1) ?: 0)
     }
-    val comments = remember(current) {
-        post.posts[current].comments
+    val comments = remember(current, post) {
+        post?.posts?.get(current)?.comments
     }
-    val reactions = remember(current) {
-        post.posts[current].realMojis
+    val reactions = remember(current, post) {
+        post?.posts?.get(current)?.realMojis
+    }
+
+    LaunchedEffect(key1 = username) {
+        viewModel.getPost(username)
     }
 
     Scaffold(
@@ -82,7 +96,7 @@ fun PostDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconButton(onClick = { /*TODO*/ }) {
+                        IconButton(onClick = { navController.popBackStack() }) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Back",
@@ -93,13 +107,13 @@ fun PostDetailScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
-                                text = post.user.username,
+                                text = post?.user?.username ?: "",
                                 color = Color.White,
                                 fontSize = 25.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = post.posts[0].takenAt,
+                                text = post?.posts?.get(0)?.takenAt?.slice(11..18) ?: "",
                                 color = Color.Gray,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Normal
@@ -125,13 +139,13 @@ fun PostDetailScreen(
                 .padding(it)
                 .fillMaxSize()
         ) {
-            Posts(post.posts) { _ -> /*TODO*/ }
+            Posts(post?.posts) { _ -> /*TODO*/ }
             SeparatorLine()
             Reactions(reactions)
             SeparatorLine()
             Comments(
                 comments = comments,
-                userName = post.user.username
+                userName = post?.user?.username
             )
         }
     }
@@ -149,7 +163,7 @@ fun SeparatorLine() {
 
 @Composable
 fun Posts(
-    posts: List<Posts>,
+    posts: List<Posts>?,
     onSwipe: (Int) -> Unit
 ) {
     Box(modifier = Modifier.height(200.dp))
@@ -157,12 +171,11 @@ fun Posts(
 
 @Composable
 fun Reactions(
-    realMojis: List<RealMojis>
+    realMojis: List<RealMojis>?
 ) {
     Box(
         modifier = Modifier
             .height(150.dp)
-            .padding(start = 10.dp)
     ) {
         LazyRow(
             modifier = Modifier
@@ -170,8 +183,11 @@ fun Reactions(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            items(realMojis.size) { index ->
-                val realMoji = realMojis[index]
+            item {
+                Spacer(modifier = Modifier.width(10.dp))
+            }
+            items(realMojis?.size ?: 0) { index ->
+                val realMoji = realMojis?.get(index)
                 Column(
                     modifier = Modifier.padding(horizontal = 10.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -179,26 +195,29 @@ fun Reactions(
                     Box {
                         AsyncImage(
                             modifier = Modifier
-                                .size(100.dp)
+                                .size(80.dp)
                                 .clip(CircleShape),
                             placeholder = Utils.debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
-                            model = realMoji.user.profilePicture.url,
+                            model = realMoji?.media?.url,
                             contentDescription = "profilePicture"
                         )
                         Text(
                             modifier = Modifier.align(Alignment.BottomEnd),
-                            text = realMoji.emoji,
-                            fontSize = 25.sp,
+                            text = realMoji?.emoji ?: "",
+                            fontSize = 20.sp,
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = realMoji.user.username,
+                        text = realMoji?.user?.username ?: "",
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
+            }
+            item {
+                Spacer(modifier = Modifier.width(10.dp))
             }
         }
     }
@@ -206,28 +225,33 @@ fun Reactions(
 
 @Composable
 fun Comments(
-    comments: List<Comment>,
-    userName: String
+    comments: List<Comment>?,
+    userName: String?
 ) {
-    if (comments.isEmpty()) {
+    if (comments?.isEmpty() == true) {
         Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "Noch keine Kommentare",
                 color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center
             )
             Text(
-                text = "Sei der Erste, der auf den Beitrag von $userName reagiert!",
+                text = "Sei der Erste, der auf den Beitrag von $userName reagiert.",
                 color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center
             )
         }
     } else {
-        Text(text = comments.first().content)
+        Text(text = comments?.first()?.content ?: "")
     }
 }
 
@@ -235,6 +259,7 @@ fun Comments(
 @Preview
 fun PostDetailScreenPreview() {
     PostDetailScreen(
-        post = testFriendsPosts
+        username = "test",
+        navController = NavController(LocalContext.current)
     )
 }

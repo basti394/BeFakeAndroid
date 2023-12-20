@@ -1,4 +1,4 @@
-package pizza.xyz.befake.data
+package pizza.xyz.befake.data.service
 
 import pizza.xyz.befake.model.dtos.feed.FeedResponseDTO
 import pizza.xyz.befake.model.dtos.friendsOfFriends.FriendsOfFriendsResponseDTO
