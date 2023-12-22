@@ -15,10 +15,10 @@ For support, please feel free to contact me at https://www.linkedin.com/in/syeda
 
 
 data class Posts (
-
 	@SerializedName("id") val id : String,
-	@SerializedName("primary") val primary : Primary,
-	@SerializedName("secondary") val secondary : Secondary,
+	@SerializedName("primary") val primary : PostMedia,
+	@SerializedName("secondary") val secondary : PostMedia,
+	@SerializedName("btsMedia") val btsMedia : PostMedia?,
 	@SerializedName("location") val location: Location?,
 	@SerializedName("caption") val caption : String?,
 	@SerializedName("retakeCounter") val retakeCounter : Int,
@@ -31,5 +31,6 @@ data class Posts (
 	@SerializedName("tags") val tags : List<String>,
 	@SerializedName("creationDate") val creationDate : String,
 	@SerializedName("updatedAt") val updatedAt : String,
-	@SerializedName("visibility") val visibility : List<String>
+	@SerializedName("visibility") val visibility : List<String>,
+	@SerializedName("postType") val postType : String,
 )

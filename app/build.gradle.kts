@@ -67,6 +67,7 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.44")
     kapt("androidx.hilt:hilt-compiler:1.0.0")
 
+    implementation("com.google.android.exoplayer:exoplayer:2.15.1")
     implementation("androidx.compose.material:material-icons-extended:1.5.4")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("io.coil-kt:coil-compose:2.4.0")

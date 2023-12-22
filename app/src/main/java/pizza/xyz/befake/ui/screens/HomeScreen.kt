@@ -29,10 +29,9 @@ import pizza.xyz.befake.model.dtos.feed.FriendsPosts
 import pizza.xyz.befake.model.dtos.feed.Location
 import pizza.xyz.befake.model.dtos.feed.Moment
 import pizza.xyz.befake.model.dtos.feed.PostData
+import pizza.xyz.befake.model.dtos.feed.PostMedia
 import pizza.xyz.befake.model.dtos.feed.Posts
-import pizza.xyz.befake.model.dtos.feed.Primary
 import pizza.xyz.befake.model.dtos.feed.ProfilePicture
-import pizza.xyz.befake.model.dtos.feed.Secondary
 import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.model.dtos.feed.UserPosts
 import pizza.xyz.befake.ui.composables.BeFakeTopAppBarContent
@@ -50,7 +49,7 @@ import pizza.xyz.befake.utils.Utils.testFeedUser
 fun HomeScreen(
     paddingValues: PaddingValues,
     homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
-    openDetailScreen: (String) -> Unit
+    openDetailScreen: (String, Int) -> Unit
 ) {
 
     val feed by homeScreenViewModel.feed.collectAsStateWithLifecycle()
@@ -70,16 +69,14 @@ fun HomeScreenContent(
     feed: PostData?,
     state: HomeScreenState,
     myProfilePicture: String,
-    openDetailScreen: (String) -> Unit
+    openDetailScreen: (String, Int) -> Unit
 ) {
-
-    val list = feed?.friendsPosts?.reversed()
 
     LazyColumn(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        val count = list?.size ?: 3
+        val count = feed?.friendsPosts?.size ?: 3
         item { Spacer(modifier = Modifier.height(100.dp)) }
         when (state) {
             is HomeScreenState.Loading -> {
@@ -94,7 +91,7 @@ fun HomeScreenContent(
                     key = { it },
                 ) {
                     Post(
-                        post = list?.get(it),
+                        post = feed?.friendsPosts?.get(it),
                         modifier = Modifier.padding(vertical = 8.dp),
                         myProfilePicture = myProfilePicture,
                         openDetailScreen = openDetailScreen
@@ -151,13 +148,13 @@ fun HomeScreenPreview() {
                                 id = "1",
                                 takenAt = "2021-09-18T12:00:00.000Z",
                                 caption = "caption",
-                                primary = Primary(
+                                primary = PostMedia(
                                     url = "https://picsum.photos/1500/2000",
                                     width = 1500,
                                     height = 2000,
                                     mediaType = "image"
                                 ),
-                                secondary = Secondary(
+                                secondary = PostMedia(
                                     url = "https://picsum.photos/1500/2000",
                                     width = 1500,
                                     height = 2000,
@@ -176,7 +173,14 @@ fun HomeScreenPreview() {
                                 creationDate = "2021-09-18T12:00:00.000Z",
                                 updatedAt = "2021-09-18T12:00:00.000Z",
                                 visibility = emptyList(),
-                                lateInSeconds = 187
+                                lateInSeconds = 187,
+                                postType = "post",
+                                btsMedia = PostMedia(
+                                    url = "https://picsum.photos/1500/2000",
+                                    width = 1500,
+                                    height = 2000,
+                                    mediaType = "image"
+                                )
                             )
                         )
                     ),
@@ -248,7 +252,7 @@ fun HomeScreenPreview() {
                     feed = feed.data.data,
                     state = HomeScreenState.Loaded,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    openDetailScreen = {}
+                    openDetailScreen = {_, _ -> }
                 )
             }
         }
@@ -283,7 +287,7 @@ fun HomeScreenLoadingPreview() {
                     feed = null,
                     state = HomeScreenState.Loading,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    openDetailScreen = {}
+                    openDetailScreen = {_, _ ->}
                 )
             }
         }

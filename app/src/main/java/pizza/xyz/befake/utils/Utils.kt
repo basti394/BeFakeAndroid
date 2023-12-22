@@ -25,11 +25,10 @@ import pizza.xyz.befake.model.dtos.countrycode.Country
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
 import pizza.xyz.befake.model.dtos.feed.Location
 import pizza.xyz.befake.model.dtos.feed.Moment
+import pizza.xyz.befake.model.dtos.feed.PostMedia
 import pizza.xyz.befake.model.dtos.feed.Posts
-import pizza.xyz.befake.model.dtos.feed.Primary
 import pizza.xyz.befake.model.dtos.feed.ProfilePicture
 import pizza.xyz.befake.model.dtos.feed.RealMojis
-import pizza.xyz.befake.model.dtos.feed.Secondary
 import pizza.xyz.befake.model.dtos.feed.User
 import java.lang.reflect.Type
 
@@ -132,13 +131,13 @@ object Utils {
         id = "1",
         takenAt = "2021-09-18T12:00:00.000Z",
         caption = "caption",
-        primary = Primary(
+        primary = PostMedia(
             url = "https://picsum.photos/1500/2000",
             width = 1500,
             height = 2000,
             mediaType = "image"
         ),
-        secondary = Secondary(
+        secondary = PostMedia(
             url = "https://picsum.photos/1500/2000",
             width = 1500,
             height = 2000,
@@ -198,19 +197,21 @@ object Utils {
         creationDate = "2021-09-18T12:00:00.000Z",
         updatedAt = "2021-09-18T12:00:00.000Z",
         visibility = emptyList(),
-        lateInSeconds = 187
+        lateInSeconds = 187,
+        postType = "bts",
+        btsMedia = null
     )
     val testFeedPostNoLocation = Posts(
         id = "1",
         takenAt = "2021-09-18T12:00:00.000Z",
         caption = "caption",
-        primary = Primary(
+        primary = PostMedia(
             url = "https://picsum.photos/1500/2000",
             width = 1500,
             height = 2000,
             mediaType = "image"
         ),
-        secondary = Secondary(
+        secondary = PostMedia(
             url = "https://picsum.photos/1500/2000",
             width = 1500,
             height = 2000,
@@ -226,7 +227,9 @@ object Utils {
         creationDate = "2021-09-18T12:00:00.000Z",
         updatedAt = "2021-09-18T12:00:00.000Z",
         visibility = emptyList(),
-        lateInSeconds = 0
+        lateInSeconds = 0,
+        postType = "",
+        btsMedia = null
     )
 
     val testMoment = Moment(

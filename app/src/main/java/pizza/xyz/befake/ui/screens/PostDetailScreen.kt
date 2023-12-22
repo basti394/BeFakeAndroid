@@ -55,6 +55,7 @@ import pizza.xyz.befake.utils.Utils
 @Composable
 fun PostDetailScreen(
     username: String,
+    selectedPost: Int?,
     viewModel: PostDetailScreenViewModel = hiltViewModel(),
     onBack: () -> Unit ,
 ) {
@@ -62,7 +63,7 @@ fun PostDetailScreen(
     val post by viewModel.post.collectAsStateWithLifecycle()
 
     var current by remember {
-        mutableIntStateOf(post?.posts?.size?.minus(1) ?: 0)
+        mutableIntStateOf(selectedPost ?: 0)
     }
     val comments = remember(current, post) {
         post?.posts?.get(current)?.comments
@@ -314,6 +315,7 @@ fun Comment(
 fun PostDetailScreenPreview() {
     PostDetailScreen(
         username = "test",
+        selectedPost = 0,
         onBack = {  }
     )
 }

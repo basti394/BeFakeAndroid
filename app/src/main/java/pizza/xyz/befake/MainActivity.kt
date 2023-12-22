@@ -107,15 +107,18 @@ fun MainContent(
                 ) { paddingValues ->
                     HomeScreen(
                         paddingValues = paddingValues,
-                        openDetailScreen = { username -> navController.navigate("post/$username") }
+                        openDetailScreen = { username, selectedPost -> navController.navigate("post/$username?$selectedPost") }
                     )
                 }
             }
             composable(
-                "post/{username}",
+                "post/{username}?{selectedPost}",
                 arguments = listOf(
                     navArgument("username") {
                         defaultValue = ""
+                    },
+                    navArgument("selectedPost") {
+                        defaultValue = 0
                     }
                 ),
                 exitTransition = {
@@ -130,8 +133,9 @@ fun MainContent(
                 }
             ) {
                 val username = it.arguments?.getString("username")
+                val selectedPost = it.arguments?.getInt("selectedPost")
                 if (username.isNullOrBlank()) throw IllegalStateException("Username cannot be null or blank")
-                PostDetailScreen(username = username, onBack = { navController.popBackStack() })
+                PostDetailScreen(username = username, selectedPost = selectedPost, onBack = { navController.popBackStack() })
             }
         }
 

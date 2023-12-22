@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.TagFaces
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.SlowMotionVideo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -64,7 +65,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import coil.compose.AsyncImage
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.upstream.DataSource
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
+import com.google.android.exoplayer2.util.Util
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -96,7 +103,7 @@ fun Post(
     modifier: Modifier = Modifier,
     post: FriendsPosts?,
     myProfilePicture: String,
-    openDetailScreen: (String) -> Unit
+    openDetailScreen: (String, Int) -> Unit
 ) {
 
     val state = rememberLazyListState()
@@ -167,7 +174,7 @@ fun Post(
                 ) {
                     PostImages(
                         post = post.posts[it],
-                        openDetailScreen = { openDetailScreen(post.user.username) }
+                        openDetailScreen = { openDetailScreen(post.user.username, current) }
                     )
                 }
             }
@@ -191,7 +198,7 @@ fun Post(
             CaptionSection(
                 post = post.posts[current],
                 myProfilePicture = myProfilePicture,
-                openDetailScreen = { openDetailScreen(post.user.username) }
+                openDetailScreen = { openDetailScreen(post.user.username, current) }
             )
         }
     }
@@ -203,9 +210,11 @@ fun PostImages(
     openDetailScreen: () -> Unit
 ) {
 
+    val context = LocalContext.current
+
     val coroutineScope = rememberCoroutineScope()
     var outerBoxSize by remember { mutableStateOf(Offset(0f, 0f)) }
-    var visible by remember {
+    var showForeground by remember {
         mutableStateOf(true)
     }
     val haptic = LocalHapticFeedback.current
@@ -213,6 +222,29 @@ fun PostImages(
     val secondary = remember { post.secondary.url }
     var showPrimaryAsMain by remember {
         mutableStateOf(true)
+    }
+
+    val isBTS = remember {
+        post.postType == "bts" && post.btsMedia != null
+    }
+
+    val exoPlayer = remember {
+        if (isBTS) {
+            com.google.android.exoplayer2.SimpleExoPlayer.Builder(context).build().apply {
+                val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context,
+                    Util.getUserAgent(context, context.packageName))
+
+                val source = ProgressiveMediaSource.Factory(dataSourceFactory)
+                    .createMediaSource(
+                        Uri.parse(
+                            // Big Buck Bunny from Blender Project
+                            post.btsMedia?.url
+                        ))
+                this.prepare(source)
+            }
+        } else {
+            null
+        }
     }
 
     Box(
@@ -225,10 +257,12 @@ fun PostImages(
             .pointerInput(Unit) {
                 detectDragGesturesAfterLongPress(
                     onDragStart = {
-                        visible = false
+                        showForeground = false
                     },
                     onDragEnd = {
-                        visible = true
+                        showForeground = true
+                        exoPlayer?.pause()
+                        exoPlayer?.seekTo(0L)
                     },
                     onDrag = { _, _ -> }
                 )
@@ -238,23 +272,49 @@ fun PostImages(
         var offsetY by remember { mutableFloatStateOf(borderMargin) }
 
 
+        if (!showForeground && (post.postType == "bts" && post.btsMedia != null)) {
 
-        AsyncImage(
-            model = secondary,
-            contentDescription = "primary",
-            placeholder = debugPlaceholderPost(id = R.drawable.post_example),
-        )
+            exoPlayer?.play()
+            exoPlayer?.addListener(object : Player.Listener {
+                override fun onPlaybackStateChanged(state: Int) {
+                    if (state == Player.STATE_ENDED) {
+                        exoPlayer.pause()
+                        showForeground = true
+                        exoPlayer.seekTo(0L)
+                    }
+                }
+            })
 
-        if (showPrimaryAsMain) {
+            AndroidView(
+                modifier = Modifier
+                    .height(550.dp)
+                    .width(LocalConfiguration.current.screenWidthDp.dp)
+                    .clip(RoundedCornerShape(cornerRadius.dp)),
+                factory = { context ->
+                    com.google.android.exoplayer2.ui.PlayerView(context).apply {
+                        player = exoPlayer
+                        this.controllerAutoShow = false
+                        useController = false
+                    }
+                }
+            )
+        } else {
             AsyncImage(
-                model = primary,
+                model = secondary,
                 contentDescription = "primary",
                 placeholder = debugPlaceholderPost(id = R.drawable.post_example),
             )
+
+            if (showPrimaryAsMain) {
+                AsyncImage(
+                    model = primary,
+                    contentDescription = "primary",
+                    placeholder = debugPlaceholderPost(id = R.drawable.post_example),
+                )
+            }
         }
 
-
-        if (visible) {
+        if (showForeground) {
             Box(
                 modifier = Modifier
                     .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
@@ -339,7 +399,47 @@ fun PostImages(
                 modifier = Modifier.align(Alignment.BottomEnd),
                 openDetailScreen = { openDetailScreen() }
             )
+
+            if (post.postType == "bts") {
+                BtsBadge(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd),
+                )
+            }
         }
+    }
+}
+
+@Composable
+fun BtsBadge(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .padding(16.dp)
+            .clip(RoundedCornerShape(30.dp))
+            .background(Color.Black.copy(alpha = 0.6f))
+            .height(30.dp)
+            .width(70.dp)
+    ) {
+        Icon(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(start = 10.dp)
+                .size(15.dp),
+            imageVector = Icons.Outlined.SlowMotionVideo,
+            contentDescription = "BTS",
+            tint = Color.White,
+        )
+        Text(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 10.dp),
+            text = "BTS",
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -591,7 +691,8 @@ fun Header(
 fun getTime(time: String): String {
     val date = Instant.parse(time)
     val localDate = date.atZone(TimeZone.getDefault().toZoneId()).toLocalDateTime()
-    return if (localDate.hour < 10) "0${localDate.hour}" else localDate.hour.toString() + ":" + if (localDate.minute < 10) "0${localDate.minute}" else localDate.minute.toString()
+    val minute = if (localDate.minute < 10) "0${localDate.minute}" else localDate.minute.toString()
+    return "${localDate.hour}:$minute"
 }
 
 @Composable
@@ -720,6 +821,6 @@ fun PostPreview() {
     Post(
         post = friendsPost,
         myProfilePicture = "https://ui-avatars.com/api/?name=&background=808080&size=100",
-        openDetailScreen = {}
+        openDetailScreen = {_, _ ->}
     )
 }

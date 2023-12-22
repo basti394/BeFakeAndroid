@@ -31,17 +31,22 @@ class HomeScreenViewModel @Inject constructor(
     private val _myProfilePicture: MutableStateFlow<String> = MutableStateFlow("")
     val myProfilePicture = _myProfilePicture.asStateFlow()
 
+    private var updating = true
+
     init {
+        viewModelScope.launch(Dispatchers.Default) {
+            updating = true
+            feedRepository.updateFeed()
+            updating = false
+            getProfilePicture()
+        }
         viewModelScope.launch {
             feedRepository.getFeed().collect {
                 _feed.value = it
-                if (feed.value != null) _state.value = HomeScreenState.Loaded
+                if (feed.value != null && !updating) _state.value = HomeScreenState.Loaded
             }
         }
-        viewModelScope.launch(Dispatchers.Default) {
-            feedRepository.updateFeed()
-            getProfilePicture()
-        }
+
     }
 
     private suspend fun getProfilePicture() {

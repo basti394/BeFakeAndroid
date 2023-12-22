@@ -58,9 +58,8 @@ class FeedRepositoryImpl @Inject constructor(
 
     private fun formatFeed(postData: PostData, id: UUID) : Post {
         val pData = postData.copy(
-            friendsPosts = postData.friendsPosts.map { it.copy(posts = it.posts.sortedBy { post -> post.creationDate }) }.sortedBy { it.posts.last().creationDate }
+            friendsPosts = postData.friendsPosts.map { it.copy(posts = it.posts.sortedBy { post -> post.creationDate }) }.sortedBy { it.posts.last().creationDate }.reversed()
         )
-
         return Post(id, pData)
     }
 }
