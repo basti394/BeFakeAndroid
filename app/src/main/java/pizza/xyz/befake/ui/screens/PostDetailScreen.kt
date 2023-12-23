@@ -1,11 +1,13 @@
 package pizza.xyz.befake.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,18 +19,23 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,8 +43,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,6 +72,7 @@ fun PostDetailScreen(
 ) {
 
     val post by viewModel.post.collectAsStateWithLifecycle()
+    val haptic = LocalHapticFeedback.current
 
     var current by remember {
         mutableIntStateOf(selectedPost ?: 0)
@@ -71,6 +83,15 @@ fun PostDetailScreen(
     val reactions = remember(current, post) {
         post?.posts?.get(current)?.realMojis
     }
+    var showBottomSheet by remember {
+        mutableStateOf(false)
+    }
+    val sheetState = rememberModalBottomSheetState()
+
+    var currentReactionDetail by remember {
+        mutableIntStateOf(0)
+    }
+
 
     LaunchedEffect(key1 = username) {
         viewModel.getPost(username)
@@ -134,6 +155,18 @@ fun PostDetailScreen(
             )
         }
     ) {
+        if (showBottomSheet) {
+            ModalBottomSheet(
+                windowInsets = WindowInsets(bottom = 0),
+                containerColor = Color(0xFF131313),
+                onDismissRequest = {
+                    showBottomSheet = false
+                },
+                sheetState = sheetState
+            ) {
+                ReactionDetail(realMoji = reactions?.reversed()?.get(currentReactionDetail))
+            }
+        }
         Column(
             modifier = Modifier
                 .padding(it)
@@ -141,7 +174,14 @@ fun PostDetailScreen(
         ) {
             Posts(post?.posts) { _ -> /*TODO*/ }
             SeparatorLine()
-            Reactions(reactions?.reversed())
+            Reactions(
+                reactions?.reversed(),
+                onReactionClick = { index ->
+                    currentReactionDetail = index
+                    showBottomSheet = true
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+            )
             SeparatorLine()
             Comments(
                 comments = comments,
@@ -171,54 +211,139 @@ fun Posts(
 
 @Composable
 fun Reactions(
-    realMojis: List<RealMojis>?
+    realMojis: List<RealMojis>?,
+    onReactionClick: (Int) -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .height(150.dp)
-    ) {
-        LazyRow(
+    if (realMojis.isNullOrEmpty()) {
+        Column(
             modifier = Modifier
-                .fillMaxSize(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            item {
-                Spacer(modifier = Modifier.width(10.dp))
-            }
-            items(realMojis?.size ?: 0) { index ->
-                val realMoji = realMojis?.get(index)
-                Column(
-                    modifier = Modifier.padding(horizontal = 10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Box {
-                        AsyncImage(
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape),
-                            placeholder = Utils.debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
-                            model = realMoji?.media?.url,
-                            contentDescription = "profilePicture"
-                        )
+            Text(
+                text = "Noch keine Reaktionen",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Sei der Erste, der auf den Beitrag reagiert.",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center
+            )
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .height(150.dp)
+        ) {
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxSize(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                item {
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
+                items(realMojis?.size ?: 0) { index ->
+                    val realMoji = realMojis?.get(index)
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .width(90.dp)
+                            .clickable { onReactionClick(index) },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Box {
+                            AsyncImage(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(CircleShape),
+                                placeholder = Utils.debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
+                                model = realMoji?.media?.url,
+                                contentDescription = "profilePicture"
+                            )
+                            Text(
+                                modifier = Modifier.align(Alignment.BottomEnd),
+                                text = realMoji?.emoji ?: "",
+                                fontSize = 20.sp,
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            modifier = Modifier.align(Alignment.BottomEnd),
-                            text = realMoji?.emoji ?: "",
-                            fontSize = 20.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            text = realMoji?.user?.username ?: "",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = realMoji?.user?.username ?: "",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.width(10.dp))
                 }
             }
-            item {
-                Spacer(modifier = Modifier.width(10.dp))
+        }
+    }
+}
+
+@Composable
+fun ReactionDetail(
+    realMoji: RealMojis?
+) {
+
+    val context = LocalContext.current
+
+    Box(modifier = Modifier
+        .height(300.dp)
+        .fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box {
+                AsyncImage(
+                    modifier = Modifier
+                        .size(160.dp)
+                        .clip(CircleShape),
+                    placeholder = Utils.debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
+                    model = realMoji?.media?.url,
+                    contentDescription = "profilePicture"
+                )
+                Text(
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    text = realMoji?.emoji ?: "",
+                    fontSize = 40.sp,
+                )
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = realMoji?.user?.username ?: "",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            AssistChip(
+                label = {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = "Back",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(16.dp)
+                    )
+                },
+                onClick = { Utils.download(realMoji?.media?.url ?: "", "${realMoji?.user?.username}'s reaction", context) }
+            )
         }
     }
 }

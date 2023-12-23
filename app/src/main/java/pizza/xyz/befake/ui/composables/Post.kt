@@ -240,7 +240,8 @@ fun PostImages(
                             // Big Buck Bunny from Blender Project
                             post.btsMedia?.url
                         ))
-                this.prepare(source)
+                this.setMediaSource(source)
+                this.prepare()
             }
         } else {
             null
@@ -273,6 +274,7 @@ fun PostImages(
 
 
         if (!showForeground && (post.postType == "bts" && post.btsMedia != null)) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 
             exoPlayer?.play()
             exoPlayer?.addListener(object : Player.Listener {
@@ -462,7 +464,7 @@ fun Reactions(
                     .padding(start = 25.dp * (reactionsPreview.size))
                     .border(2.dp, Color.Black, CircleShape)
                     .clip(CircleShape)
-                    .background(Color.DarkGray)
+                    .background(Color(0xFF131313))
                     .size(35.dp)
             ) {
                 Text(
@@ -691,8 +693,9 @@ fun Header(
 fun getTime(time: String): String {
     val date = Instant.parse(time)
     val localDate = date.atZone(TimeZone.getDefault().toZoneId()).toLocalDateTime()
+    val hour = if (localDate.hour < 10) "0${localDate.hour}" else localDate.hour.toString()
     val minute = if (localDate.minute < 10) "0${localDate.minute}" else localDate.minute.toString()
-    return "${localDate.hour}:$minute"
+    return "$hour:$minute"
 }
 
 @Composable
