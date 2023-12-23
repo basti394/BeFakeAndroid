@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -59,8 +60,10 @@ import pizza.xyz.befake.R
 import pizza.xyz.befake.model.dtos.feed.Comment
 import pizza.xyz.befake.model.dtos.feed.Posts
 import pizza.xyz.befake.model.dtos.feed.RealMojis
+import pizza.xyz.befake.ui.composables.Dot
 import pizza.xyz.befake.ui.viewmodel.PostDetailScreenViewModel
 import pizza.xyz.befake.utils.Utils
+import pizza.xyz.befake.utils.Utils.testFriendsPosts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,17 +75,49 @@ fun PostDetailScreen(
 ) {
 
     val post by viewModel.post.collectAsStateWithLifecycle()
-    val haptic = LocalHapticFeedback.current
 
     var current by remember {
         mutableIntStateOf(selectedPost ?: 0)
     }
+
     val comments = remember(current, post) {
         post?.posts?.get(current)?.comments
     }
     val reactions = remember(current, post) {
         post?.posts?.get(current)?.realMojis
     }
+    val takenAt = remember(current, post) {
+        post?.posts?.get(current)?.takenAt
+    }
+    val posts = remember(current, post) {
+        post?.posts
+    }
+
+    LaunchedEffect(key1 = username) {
+        viewModel.getPost(username)
+    }
+
+    PostDetailScreenContent(
+        comments = comments,
+        reactions = reactions,
+        username = username,
+        takenAt = takenAt,
+        posts = posts,
+        onBack = onBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PostDetailScreenContent(
+    comments: List<Comment>?,
+    reactions: List<RealMojis>?,
+    username: String,
+    takenAt: String?,
+    posts: List<Posts>?,
+    onBack: () -> Unit
+) {
+    val haptic = LocalHapticFeedback.current
     var showBottomSheet by remember {
         mutableStateOf(false)
     }
@@ -90,11 +125,6 @@ fun PostDetailScreen(
 
     var currentReactionDetail by remember {
         mutableIntStateOf(0)
-    }
-
-
-    LaunchedEffect(key1 = username) {
-        viewModel.getPost(username)
     }
 
     Scaffold(
@@ -128,13 +158,13 @@ fun PostDetailScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
-                                text = post?.user?.username ?: "",
+                                text = username,
                                 color = Color.White,
                                 fontSize = 25.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = post?.posts?.get(0)?.takenAt?.slice(11..18) ?: "",
+                                text = takenAt?.let { Utils.getTime(it, true) } ?: "",
                                 color = Color.Gray,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Normal
@@ -155,24 +185,20 @@ fun PostDetailScreen(
             )
         }
     ) {
-        if (showBottomSheet) {
-            ModalBottomSheet(
-                windowInsets = WindowInsets(bottom = 0),
-                containerColor = Color(0xFF131313),
-                onDismissRequest = {
-                    showBottomSheet = false
-                },
-                sheetState = sheetState
-            ) {
-                ReactionDetail(realMoji = reactions?.reversed()?.get(currentReactionDetail))
-            }
-        }
+        ReactionDetailBottomSheet(
+            showSheet = showBottomSheet,
+            onDismissRequest = {
+                showBottomSheet = false
+            },
+            sheetState = sheetState,
+            realMoji = reactions?.reversed()?.get(currentReactionDetail)
+        )
         Column(
             modifier = Modifier
                 .padding(it)
                 .fillMaxSize()
         ) {
-            Posts(post?.posts) { _ -> /*TODO*/ }
+            Posts(posts) { _ -> /*TODO*/ }
             SeparatorLine()
             Reactions(
                 reactions?.reversed(),
@@ -185,7 +211,7 @@ fun PostDetailScreen(
             SeparatorLine()
             Comments(
                 comments = comments,
-                userName = post?.user?.username
+                userName = username
             )
         }
     }
@@ -293,6 +319,26 @@ fun Reactions(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReactionDetailBottomSheet(
+    showSheet: Boolean,
+    onDismissRequest: () -> Unit,
+    sheetState: SheetState,
+    realMoji: RealMojis?
+) {
+    if (showSheet) {
+        ModalBottomSheet(
+            windowInsets = WindowInsets(bottom = 0),
+            containerColor = Color(0xFF131313),
+            onDismissRequest = onDismissRequest,
+            sheetState = sheetState
+        ) {
+            ReactionDetail(realMoji = realMoji)
+        }
+    }
+}
+
 @Composable
 fun ReactionDetail(
     realMoji: RealMojis?
@@ -301,7 +347,7 @@ fun ReactionDetail(
     val context = LocalContext.current
 
     Box(modifier = Modifier
-        .height(300.dp)
+        .height(350.dp)
         .fillMaxWidth()
     ) {
         Column(
@@ -312,7 +358,7 @@ fun ReactionDetail(
             Box {
                 AsyncImage(
                     modifier = Modifier
-                        .size(160.dp)
+                        .size(200.dp)
                         .clip(CircleShape),
                     placeholder = Utils.debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
                     model = realMoji?.media?.url,
@@ -396,14 +442,14 @@ fun Comment(
 ) {
     Row(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 8.dp)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
             modifier = Modifier
-                .size(30.dp)
+                .size(40.dp)
                 .clip(CircleShape),
             placeholder = Utils.debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
             model = comment.user.profilePicture.url,
@@ -417,13 +463,26 @@ fun Comment(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = comment.user.username,
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.ExtraBold,
-                textAlign = TextAlign.Start
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = comment.user.username,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    textAlign = TextAlign.Start
+                )
+                Dot()
+                Text(
+                    text = Utils.getTime(comment.postedAt, false),
+                    color = Color.LightGray,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Start
+                )
+            }
+
             Text(
                 text = comment.content,
                 color = Color.White,
@@ -438,9 +497,19 @@ fun Comment(
 @Composable
 @Preview
 fun PostDetailScreenPreview() {
-    PostDetailScreen(
-        username = "test",
-        selectedPost = 0,
-        onBack = {  }
+    PostDetailScreenContent(
+        comments = testFriendsPosts.posts[0].comments,
+        reactions = testFriendsPosts.posts[0].realMojis,
+        username = testFriendsPosts.user.username,
+        takenAt = testFriendsPosts.posts[0].takenAt,
+        posts = testFriendsPosts.posts,
+        onBack = {}
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Preview
+fun ReactionDetailPreview() {
+    ReactionDetail(realMoji = testFriendsPosts.posts[0].realMojis[0])
 }

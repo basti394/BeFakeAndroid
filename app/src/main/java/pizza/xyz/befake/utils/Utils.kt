@@ -37,6 +37,8 @@ import pizza.xyz.befake.model.dtos.feed.ProfilePicture
 import pizza.xyz.befake.model.dtos.feed.RealMojis
 import pizza.xyz.befake.model.dtos.feed.User
 import java.lang.reflect.Type
+import java.time.Instant
+import java.util.TimeZone
 
 object Utils {
 
@@ -63,6 +65,36 @@ object Utils {
         val downloadManager = context.getSystemService(DownloadManager::class.java)
         downloadManager.enqueue(request)
         Toast.makeText(context, "Downloading Started.", Toast.LENGTH_SHORT).show()
+    }
+
+    fun getTime(time: String, showSec: Boolean): String {
+        val date = Instant.parse(time)
+        val localDate = date.atZone(TimeZone.getDefault().toZoneId()).toLocalDateTime()
+        val hour = if (localDate.hour < 10) "0${localDate.hour}" else localDate.hour.toString()
+        val minute = if (localDate.minute < 10) "0${localDate.minute}" else localDate.minute.toString()
+        if (!showSec) return "$hour:$minute"
+        val second = if (localDate.second < 10) "0${localDate.second}" else localDate.second.toString()
+        return "$hour:$minute:$second"
+    }
+
+    fun getTimeLate(
+        lateInSeconds: Int,
+        context: Context
+    ) : String {
+        return when {
+            lateInSeconds < 60 -> {
+                context.getString(R.string.sec_late, lateInSeconds.toString())
+            }
+            lateInSeconds < 3600 -> {
+                context.getString(R.string.min_late, (lateInSeconds / 60).toString())
+            }
+            lateInSeconds < 86400 -> {
+                context.getString(R.string.h_late, (lateInSeconds / 3600).toString())
+            }
+            else -> {
+                "late"
+            }
+        }
     }
 
     @Composable

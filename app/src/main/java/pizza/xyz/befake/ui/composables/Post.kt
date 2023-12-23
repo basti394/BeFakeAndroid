@@ -82,6 +82,7 @@ import pizza.xyz.befake.model.dtos.feed.Location
 import pizza.xyz.befake.model.dtos.feed.Moment
 import pizza.xyz.befake.model.dtos.feed.Posts
 import pizza.xyz.befake.model.dtos.feed.RealMojis
+import pizza.xyz.befake.utils.Utils
 import pizza.xyz.befake.utils.Utils.debugPlaceholderPost
 import pizza.xyz.befake.utils.Utils.debugPlaceholderProfilePicture
 import pizza.xyz.befake.utils.Utils.shimmerBrush
@@ -89,9 +90,7 @@ import pizza.xyz.befake.utils.Utils.testFeedPostLateThreeMinLocationBerlin
 import pizza.xyz.befake.utils.Utils.testFeedPostNoLocation
 import pizza.xyz.befake.utils.Utils.testFeedUser
 import pizza.xyz.befake.utils.rememberCustomFlingBehaviour
-import java.time.Instant
 import java.util.Locale
-import java.util.TimeZone
 import kotlin.math.roundToInt
 
 const val borderMargin = 50f
@@ -657,7 +656,7 @@ fun Header(
                         Text(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            text = getTime(time),
+                            text = Utils.getTime(time, !isLate),
                             color = Color.Gray,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal
@@ -668,7 +667,7 @@ fun Header(
                         Text(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            text = getTimeLate(lateInSeconds, context),
+                            text = Utils.getTimeLate(lateInSeconds, context),
                             color = Color.Gray,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal
@@ -688,14 +687,6 @@ fun Header(
             )
         }
     }
-}
-
-fun getTime(time: String): String {
-    val date = Instant.parse(time)
-    val localDate = date.atZone(TimeZone.getDefault().toZoneId()).toLocalDateTime()
-    val hour = if (localDate.hour < 10) "0${localDate.hour}" else localDate.hour.toString()
-    val minute = if (localDate.minute < 10) "0${localDate.minute}" else localDate.minute.toString()
-    return "$hour:$minute"
 }
 
 @Composable
@@ -782,26 +773,6 @@ fun openInGoogleMaps(
     val uri = "geo:$lat,$long?q=$lat,$long($userName's BeReal)"
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
     context.startActivity(intent)
-}
-
-fun getTimeLate(
-    lateInSeconds: Int,
-    context: Context
-) : String {
-    return when {
-        lateInSeconds < 60 -> {
-            context.getString(R.string.sec_late, lateInSeconds.toString())
-        }
-        lateInSeconds < 3600 -> {
-            context.getString(R.string.min_late, (lateInSeconds / 60).toString())
-        }
-        lateInSeconds < 86400 -> {
-            context.getString(R.string.h_late, (lateInSeconds / 3600).toString())
-        }
-        else -> {
-            "late"
-        }
-    }
 }
 
 @Composable
