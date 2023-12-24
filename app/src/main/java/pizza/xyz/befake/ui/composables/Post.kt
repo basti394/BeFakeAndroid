@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -147,6 +148,15 @@ fun Post(
         val lateInSeconds = remember(current) {
             post.posts[current].lateInSeconds
         }
+        val btsLink = remember(current) {
+            post.posts[current].btsMedia?.url
+        }
+        val primaryLink = remember(current) {
+            post.posts[current].primary.url
+        }
+        val secondaryLink = remember(current) {
+            post.posts[current].secondary.url
+        }
 
         Column(
             modifier = modifier
@@ -157,7 +167,10 @@ fun Post(
                 time = time,
                 location = location,
                 isLate = isLate,
-                lateInSeconds = lateInSeconds
+                lateInSeconds = lateInSeconds,
+                btsLink = btsLink,
+                primaryLink = primaryLink,
+                secondaryLink = secondaryLink,
             )
 
             LazyRow(
@@ -547,7 +560,10 @@ fun PostLoading() {
             time = "",
             location = null,
             isLate = false,
-            lateInSeconds = 0
+            lateInSeconds = 0,
+            btsLink = null,
+            primaryLink = "",
+            secondaryLink = "",
         )
         Box(
             modifier = Modifier
@@ -573,7 +589,10 @@ fun Header(
     time: String,
     location: Location?,
     isLate: Boolean = false,
-    lateInSeconds: Int = 0
+    lateInSeconds: Int = 0,
+    btsLink: String?,
+    primaryLink: String,
+    secondaryLink: String,
 ) {
 
     val context = LocalContext.current
@@ -581,6 +600,8 @@ fun Header(
     val coroutineScope = rememberCoroutineScope()
 
     var locationName: String? by remember { mutableStateOf(null) }
+
+    var showDownloadMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = location) {
         location?.let {
@@ -677,13 +698,28 @@ fun Header(
             }
        }
 
-        IconButton(
-            onClick = { /*TODO*/ }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.TopStart)
         ) {
-            Icon(
-                imageVector = Icons.Outlined.MoreVert,
-                contentDescription = "More",
-                tint = Color.White
+            IconButton(
+                onClick = { showDownloadMenu = true }
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.MoreVert,
+                    contentDescription = "More",
+                    tint = Color.White
+                )
+            }
+            DownloadPostMenu(
+                expanded = showDownloadMenu,
+                userName = userName,
+                takenAt = time,
+                btsLink = btsLink,
+                primaryLink = primaryLink,
+                secondaryLink = secondaryLink,
+                onDismissRequest = { showDownloadMenu = false },
             )
         }
     }
