@@ -255,7 +255,7 @@ object Utils {
         origin = "repost",
         parentPostId = "",
         parentPostUserId = "",
-        parentPostUsername = "",
+        parentPostUsername = "basti",
 
     )
     val testFeedPostNoLocation = Posts(
@@ -290,7 +290,7 @@ object Utils {
         origin = "repost",
         parentPostId = "",
         parentPostUserId = "",
-        parentPostUsername = "",
+        parentPostUsername = "basti",
     )
 
     val testMoment = Moment(

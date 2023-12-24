@@ -665,6 +665,7 @@ fun Header(
                             tint = Color.Gray,
                             modifier = Modifier.size(12.dp)
                         )
+                        Spacer(modifier = Modifier.width(3.dp))
                         Text(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
