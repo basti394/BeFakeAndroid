@@ -18,4 +18,5 @@
     <string name="view_comment">1 Kommentar anschauen</string>
     <string name="view_comments">%d Kommentare anschauen</string>
     <string name="log_out_text">Wir mussten dich leider abmelden. Bitte melde dich neu an.</string>
+    <string name="search_for_your_country">Suche nach deinem Land</string>
 </resources>

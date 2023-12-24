@@ -31,13 +31,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -65,7 +63,6 @@ import pizza.xyz.befake.ui.viewmodel.LoginScreenViewModel
 import pizza.xyz.befake.ui.viewmodel.LoginState
 import pizza.xyz.befake.utils.Utils.debugPlaceholder
 import pizza.xyz.befake.utils.Utils.flagType
-import pizza.xyz.befake.utils.Utils.getCountries
 
 const val cornerRadius = 40f
 
@@ -343,7 +340,6 @@ val textStyle: (color: Color) -> TextStyle = { color ->
     )
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PhoneNumberInput(
     value: String,
@@ -353,13 +349,6 @@ fun PhoneNumberInput(
     currentCountry: Country
 ) {
 
-    val countries: MutableState<List<Country>?> = remember {
-        mutableStateOf(null)
-    }
-
-    LaunchedEffect(key1 = Unit) {
-        countries.value = getCountries()
-    }
 
     val textSelectionColors = TextSelectionColors(
         handleColor = Color.White,
@@ -373,14 +362,13 @@ fun PhoneNumberInput(
 
     if (expanded) {
         CountryCodeSelectionSheet(
-            countries = countries.value ?: emptyList(),
-            currentCountry = currentCountry,
-            onDismiss = {
+            onCountrySelected = {
+                onCountrySelected(it)
                 expanded = false
                 focusRequester?.requestFocus()
             },
-            onCountrySelected = {
-                onCountrySelected(it)
+            currentCountry = currentCountry,
+            onDismiss = {
                 expanded = false
                 focusRequester?.requestFocus()
             }

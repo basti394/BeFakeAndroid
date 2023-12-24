@@ -7,14 +7,17 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,8 +27,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -36,21 +41,49 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import pizza.xyz.befake.R
 import pizza.xyz.befake.model.dtos.countrycode.Country
 import pizza.xyz.befake.ui.screens.textStyle
+import pizza.xyz.befake.ui.viewmodel.CountryCodeSelectionSheetViewModel
 import pizza.xyz.befake.utils.Utils.debugPlaceholder
 import pizza.xyz.befake.utils.Utils.flagType
+import pizza.xyz.befake.utils.Utils.lightBlack
 
+
+@Composable
+fun CountryCodeSelectionSheet(
+    viewModel: CountryCodeSelectionSheetViewModel = hiltViewModel(),
+    onCountrySelected: (Country) -> Unit,
+    currentCountry: Country,
+    onDismiss: () -> Unit
+) {
+
+    val countries by viewModel.countries.collectAsStateWithLifecycle()
+
+    val onSearch = { search: String ->
+        viewModel.searchCountry(search)
+    }
+
+    CountryCodeSelectionSheetContent(
+        countries = countries,
+        currentCountry = currentCountry,
+        onDismiss = onDismiss,
+        onCountrySelected = onCountrySelected,
+        onSearch = onSearch
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CountryCodeSelectionSheet(
+fun CountryCodeSelectionSheetContent(
     countries: List<Country>,
     currentCountry: Country,
     onDismiss: () -> Unit,
-    onCountrySelected: (Country) -> Unit
+    onCountrySelected: (Country) -> Unit,
+    onSearch: (String) -> Unit
 ) {
 
     Dialog(
@@ -69,7 +102,11 @@ fun CountryCodeSelectionSheet(
                 .background(Color.Black)
                 .imePadding()
         ) {
-            Column {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+            ) {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
@@ -92,6 +129,23 @@ fun CountryCodeSelectionSheet(
                         }
                     },
                     colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color.Black)
+                )
+                CountrySearchBar(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .background(lightBlack, RoundedCornerShape(cornerRadius.dp))
+                        .clip(RoundedCornerShape(cornerRadius)),
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "close",
+                            tint = Color.White
+                        )
+                    },
+                    onSearch = onSearch,
+                    placeholder = stringResource(R.string.search_for_your_country),
                 )
                 LazyColumn(
                     modifier = Modifier
@@ -208,9 +262,10 @@ fun CountryCodeSelectionSheetPreview() {
     val currentCountry = Country("Deutschland", "+49", "DE")
 
 
-    CountryCodeSelectionSheet(
-        countries,
+    CountryCodeSelectionSheetContent(
+        countries.sortedBy { it.name.first() },
         currentCountry,
+        {},
         {},
         {}
     )

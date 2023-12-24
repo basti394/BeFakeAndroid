@@ -41,6 +41,8 @@ import java.util.TimeZone
 
 object Utils {
 
+    val lightBlack = Color(0xFF131313)
+
     val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "auth")
     val TOKEN = stringPreferencesKey("token")
     const val BASE_URL = "https://berealapi.fly.dev/"

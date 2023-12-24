@@ -24,8 +24,6 @@ fun DownloadPostMenu(
     takenAt: String,
     userName: String
 ) {
-
-
     val context = LocalContext.current
 
     DropdownMenu(

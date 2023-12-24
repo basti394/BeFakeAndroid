@@ -17,4 +17,5 @@
     <string name="view_comment">View 1 comment</string>
     <string name="view_comments">View %d comments</string>
     <string name="log_out_text">Sorry we had to log you out! Please login again.</string>
+    <string name="search_for_your_country">Search for your Country</string>
 </resources>
