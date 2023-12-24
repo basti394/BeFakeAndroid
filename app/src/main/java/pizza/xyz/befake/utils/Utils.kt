@@ -251,7 +251,12 @@ object Utils {
         visibility = emptyList(),
         lateInSeconds = 187,
         postType = "bts",
-        btsMedia = null
+        btsMedia = null,
+        origin = "repost",
+        parentPostId = "",
+        parentPostUserId = "",
+        parentPostUsername = "",
+
     )
     val testFeedPostNoLocation = Posts(
         id = "1",
@@ -281,7 +286,11 @@ object Utils {
         visibility = emptyList(),
         lateInSeconds = 0,
         postType = "",
-        btsMedia = null
+        btsMedia = null,
+        origin = "repost",
+        parentPostId = "",
+        parentPostUserId = "",
+        parentPostUsername = "",
     )
 
     val testMoment = Moment(

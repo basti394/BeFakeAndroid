@@ -180,7 +180,11 @@ fun HomeScreenPreview() {
                                     width = 1500,
                                     height = 2000,
                                     mediaType = "image"
-                                )
+                                ),
+                                origin = "repost",
+                                parentPostId = "",
+                                parentPostUserId = "",
+                                parentPostUsername = "",
                             )
                         )
                     ),

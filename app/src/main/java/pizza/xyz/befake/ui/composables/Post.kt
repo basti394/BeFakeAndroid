@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.TagFaces
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.SlowMotionVideo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -157,6 +158,9 @@ fun Post(
         val secondaryLink = remember(current) {
             post.posts[current].secondary.url
         }
+        val parentUsername = remember(current) {
+            post.posts[current].parentPostUsername
+        }
 
         Column(
             modifier = modifier
@@ -171,6 +175,7 @@ fun Post(
                 btsLink = btsLink,
                 primaryLink = primaryLink,
                 secondaryLink = secondaryLink,
+                parentUsername = parentUsername,
             )
 
             LazyRow(
@@ -564,6 +569,7 @@ fun PostLoading() {
             btsLink = null,
             primaryLink = "",
             secondaryLink = "",
+            parentUsername = null,
         )
         Box(
             modifier = Modifier
@@ -593,6 +599,7 @@ fun Header(
     btsLink: String?,
     primaryLink: String,
     secondaryLink: String,
+    parentUsername: String?,
 ) {
 
     val context = LocalContext.current
@@ -651,6 +658,23 @@ fun Header(
                     modifier = Modifier.width((LocalConfiguration.current.screenWidthDp * 0.7f).dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    if (parentUsername != null) {
+                        Icon(
+                            imageVector = Icons.Outlined.Repeat,
+                            contentDescription = "Reply",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            text = parentUsername,
+                            color = Color.Gray,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal
+                        )
+                        Dot()
+                    }
                     if (location != null) {
                         locationName?.let {
                             Text(
