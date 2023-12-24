@@ -41,7 +41,7 @@ fun DownloadPostMenu(
                 )
             },
             onClick = {
-                Utils.download(secondaryLink, "FRONT_${userName}_${takenAt}", context)
+                Utils.download(secondaryLink, "SELFIE_${userName}_${takenAt}.webp", context)
                 onDismissRequest()
             },
             leadingIcon = {
@@ -60,7 +60,7 @@ fun DownloadPostMenu(
                     color = Color.White
                 )
             },
-            onClick = { Utils.download(primaryLink, "FRONT_${userName}_${takenAt}", context)
+            onClick = { Utils.download(primaryLink, "FRONT_${userName}_${takenAt}.webp", context)
                 onDismissRequest()
             },
             leadingIcon = {
@@ -80,7 +80,7 @@ fun DownloadPostMenu(
                         color = Color.White
                     )
                 },
-                onClick = { Utils.download(btsLink, "BTS_${userName}_${takenAt}", context)
+                onClick = { Utils.download(btsLink, "BTS_${userName}_${takenAt}.mp4", context)
                     onDismissRequest()
                 },
                 leadingIcon = {

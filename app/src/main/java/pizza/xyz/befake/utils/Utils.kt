@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.Uri
 import android.os.Environment
 import android.webkit.CookieManager
-import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.RepeatMode
@@ -55,16 +54,15 @@ object Utils {
 
     fun download(url: String, fileName: String, context: Context) {
         val request = DownloadManager.Request(Uri.parse(url))
-        val title = URLUtil.guessFileName(fileName, null, null)
-        request.setTitle(title)
+        request.setTitle(fileName)
         request.setDescription("Downloading File please wait.....")
         val cookie = CookieManager.getInstance().getCookie(url)
         request.addRequestHeader("cookie", cookie)
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, title)
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
         val downloadManager = context.getSystemService(DownloadManager::class.java)
         downloadManager.enqueue(request)
-        Toast.makeText(context, "Downloading Started.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Downloading to Downloads", Toast.LENGTH_SHORT).show()
     }
 
     fun getTime(time: String, showSec: Boolean): String {
