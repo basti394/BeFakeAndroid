@@ -61,6 +61,7 @@ import pizza.xyz.befake.model.dtos.feed.Comment
 import pizza.xyz.befake.model.dtos.feed.Posts
 import pizza.xyz.befake.model.dtos.feed.RealMojis
 import pizza.xyz.befake.ui.composables.Dot
+import pizza.xyz.befake.ui.composables.ProfilePicture
 import pizza.xyz.befake.ui.viewmodel.PostDetailScreenViewModel
 import pizza.xyz.befake.utils.Utils
 import pizza.xyz.befake.utils.Utils.testFriendsPosts
@@ -160,13 +161,13 @@ private fun PostDetailScreenContent(
                             Text(
                                 text = username,
                                 color = Color.White,
-                                fontSize = 25.sp,
+                                fontSize = 20.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 text = takenAt?.let { Utils.getTime(it, true) } ?: "",
                                 color = Color.Gray,
-                                fontSize = 16.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Normal
                             )
                         }
@@ -185,14 +186,17 @@ private fun PostDetailScreenContent(
             )
         }
     ) {
-        ReactionDetailBottomSheet(
-            showSheet = showBottomSheet,
-            onDismissRequest = {
-                showBottomSheet = false
-            },
-            sheetState = sheetState,
-            realMoji = reactions?.reversed()?.get(currentReactionDetail)
-        )
+        if (reactions?.isNotEmpty() == true) {
+            ReactionDetailBottomSheet(
+                showSheet = showBottomSheet,
+                onDismissRequest = {
+                    showBottomSheet = false
+                },
+                sheetState = sheetState,
+                realMoji = reactions.reversed()[currentReactionDetail]
+            )
+        }
+
         Column(
             modifier = Modifier
                 .padding(it)
@@ -243,7 +247,7 @@ fun Reactions(
     if (realMojis.isNullOrEmpty()) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -447,13 +451,12 @@ fun Comment(
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        AsyncImage(
+        ProfilePicture(
             modifier = Modifier
-                .size(40.dp)
+                .size(30.dp)
                 .clip(CircleShape),
-            placeholder = Utils.debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
-            model = comment.user.profilePicture.url,
-            contentDescription = "profilePicture"
+            profilePicture = comment.user.profilePicture?.url,
+            username = comment.user.username
         )
         Spacer(modifier = Modifier.width(8.dp))
         Column(

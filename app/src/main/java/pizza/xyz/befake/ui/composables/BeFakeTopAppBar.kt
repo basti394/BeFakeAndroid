@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -34,11 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
-import pizza.xyz.befake.R
 import pizza.xyz.befake.ui.viewmodel.BeFakeTopAppBarViewModel
 import pizza.xyz.befake.ui.viewmodel.LoginState
-import pizza.xyz.befake.utils.Utils.debugPlaceholderProfilePicture
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,16 +44,17 @@ fun BeFakeTopAppBar(
 ) {
 
     val profilePicture by viewModel.profilePicture.collectAsStateWithLifecycle()
-    val userNamePb by viewModel.usernamePb.collectAsStateWithLifecycle()
+    val username by viewModel.username.collectAsStateWithLifecycle()
 
-    BeFakeTopAppBarContent(loginState = loginState, profilePicture = profilePicture?.url ?: userNamePb)
+    BeFakeTopAppBarContent(loginState = loginState, profilePicture = profilePicture?.url, username = username)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BeFakeTopAppBarContent(
     loginState: LoginState,
-    profilePicture: String
+    profilePicture: String?,
+    username: String
 ) {
     Column {
         TopAppBar(
@@ -74,7 +71,8 @@ fun BeFakeTopAppBarContent(
             title = {
                 Header(
                     loginState = loginState,
-                    profilePicture = profilePicture
+                    profilePicture = profilePicture,
+                    username = username
                 )
             },
             colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color.Transparent)
@@ -85,7 +83,8 @@ fun BeFakeTopAppBarContent(
 @Composable
 fun Header(
     loginState: LoginState,
-    profilePicture: String
+    profilePicture: String?,
+    username: String
 ) {
     Box(
         modifier = Modifier
@@ -117,14 +116,12 @@ fun Header(
                 )
             )
             if (loginState is LoginState.LoggedIn) {
-                AsyncImage(
+                ProfilePicture(
                     modifier = Modifier
                         .size(30.dp)
-                        .border(1.dp, Color.Black, CircleShape)
-                        .clip(CircleShape),
-                    placeholder = debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
-                    model = profilePicture,
-                    contentDescription = "profilePicture"
+                        .border(1.dp, Color.Black, CircleShape),
+                    profilePicture = profilePicture,
+                    username = username
                 )
             }
         }
@@ -136,6 +133,27 @@ fun Header(
 fun HeaderPreview() {
     BeFakeTopAppBarContent(
         loginState = LoginState.LoggedIn,
-        profilePicture = "https://picsum.photos/1000/1000"
+        profilePicture = "https://picsum.photos/1000/1000",
+        username = "username"
+    )
+}
+
+@Composable
+@Preview
+fun HeaderPreviewLetterPb() {
+    BeFakeTopAppBarContent(
+        loginState = LoginState.LoggedIn,
+        profilePicture = null,
+        username = "username"
+    )
+}
+
+@Composable
+@Preview
+fun HeaderPreviewNotLoggedIn() {
+    BeFakeTopAppBarContent(
+        loginState = LoginState.PhoneNumber,
+        profilePicture = null,
+        username = "username"
     )
 }

@@ -31,6 +31,9 @@ class HomeScreenViewModel @Inject constructor(
     private val _myProfilePicture: MutableStateFlow<String> = MutableStateFlow("")
     val myProfilePicture = _myProfilePicture.asStateFlow()
 
+    private val _myUsername: MutableStateFlow<String> = MutableStateFlow("")
+    val myUsername = _myUsername.asStateFlow()
+
     private var updating = true
 
     init {
@@ -53,6 +56,7 @@ class HomeScreenViewModel @Inject constructor(
         suspend { friendsService.me() }.handle(
             onSuccess = {
                 _myProfilePicture.value = it.data.profilePicture?.url ?: ""
+                _myUsername.value = it.data.username
             },
             loginService = loginService
         )

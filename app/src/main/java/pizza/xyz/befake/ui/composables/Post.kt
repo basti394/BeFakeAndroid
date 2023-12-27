@@ -104,6 +104,7 @@ fun Post(
     modifier: Modifier = Modifier,
     post: FriendsPosts?,
     myProfilePicture: String,
+    myUsername: String,
     openDetailScreen: (String, Int) -> Unit
 ) {
 
@@ -215,6 +216,7 @@ fun Post(
             CaptionSection(
                 post = post.posts[current],
                 myProfilePicture = myProfilePicture,
+                username = myUsername,
                 openDetailScreen = { openDetailScreen(post.user.username, current) }
             )
         }
@@ -304,19 +306,23 @@ fun PostImages(
                 }
             })
 
-            AndroidView(
+            Box(
                 modifier = Modifier
                     .height(550.dp)
                     .width(LocalConfiguration.current.screenWidthDp.dp)
                     .clip(RoundedCornerShape(cornerRadius.dp)),
-                factory = { context ->
-                    com.google.android.exoplayer2.ui.PlayerView(context).apply {
-                        player = exoPlayer
-                        this.controllerAutoShow = false
-                        useController = false
+            ) {
+                AndroidView(
+                    factory = { context ->
+                        com.google.android.exoplayer2.ui.PlayerView(context).apply {
+                            player = exoPlayer
+                            this.controllerAutoShow = false
+                            useController = false
+                            resizeMode = com.google.android.exoplayer2.ui.AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT
+                        }
                     }
-                }
-            )
+                )
+            }
         } else {
             AsyncImage(
                 model = secondary,
@@ -509,7 +515,7 @@ fun Reactions(
                         .clip(CircleShape),
                     placeholder = debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
                     model = realMoji.media.url,
-                    contentDescription = "profilePicture"
+                    contentDescription = "realMoji"
                 )
             }
         }
@@ -632,18 +638,15 @@ fun Header(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-       Row(
-           modifier = Modifier
-               .padding(horizontal = 16.dp),
-           verticalAlignment = Alignment.CenterVertically
-       ) {
-            AsyncImage(
-                modifier = Modifier
-                    .size(35.dp)
-                    .clip(CircleShape),
-                placeholder = debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
-                model = profilePicture,
-                contentDescription = "profilePicture"
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ProfilePicture(
+                modifier = Modifier.size(35.dp),
+                profilePicture = profilePicture,
+                username = userName
             )
             Column(
                  modifier = Modifier.padding(start = 8.dp)
@@ -769,6 +772,7 @@ fun Dot(
 fun CaptionSection(
     post: Posts,
     myProfilePicture: String,
+    username: String,
     openDetailScreen: () -> Unit
 ) {
     Column(
@@ -787,14 +791,7 @@ fun CaptionSection(
             modifier = Modifier.clickable { openDetailScreen() },
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                modifier = Modifier
-                    .size(30.dp)
-                    .clip(CircleShape),
-                placeholder = debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
-                model = myProfilePicture,
-                contentDescription = "profilePicture"
-            )
+            ProfilePicture(modifier = Modifier.size(30.dp), profilePicture = myProfilePicture, username = username)
             Text(
                 modifier = Modifier.padding(start = 8.dp),
                 text = when (post.comments.size) {
@@ -856,6 +853,7 @@ fun PostPreview() {
     Post(
         post = friendsPost,
         myProfilePicture = "https://ui-avatars.com/api/?name=&background=808080&size=100",
+        myUsername = "myUsername",
         openDetailScreen = {_, _ ->}
     )
 }

@@ -43,7 +43,7 @@ class FeedRepositoryImpl @Inject constructor(
                         return@handle
                     } else {
                         val id = UUID.randomUUID()
-                        postDAO.insertPostData(Post(id, data))
+                        postDAO.insertPostData( formatFeed(data, id))
                         return@handle
                     }
                 }

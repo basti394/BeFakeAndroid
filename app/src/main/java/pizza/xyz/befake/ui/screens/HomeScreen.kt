@@ -55,12 +55,14 @@ fun HomeScreen(
     val feed by homeScreenViewModel.feed.collectAsStateWithLifecycle()
     val state by homeScreenViewModel.state.collectAsStateWithLifecycle()
     val myProfilePicture by homeScreenViewModel.myProfilePicture.collectAsStateWithLifecycle()
+    val myUsername by homeScreenViewModel.myUsername.collectAsStateWithLifecycle()
 
     HomeScreenContent(
         feed = feed?.data,
         state = state,
         myProfilePicture = myProfilePicture,
-        openDetailScreen = openDetailScreen
+        openDetailScreen = openDetailScreen,
+        myUsername = myUsername
     )
 }
 
@@ -69,6 +71,7 @@ fun HomeScreenContent(
     feed: PostData?,
     state: HomeScreenState,
     myProfilePicture: String,
+    myUsername: String,
     openDetailScreen: (String, Int) -> Unit
 ) {
 
@@ -94,6 +97,7 @@ fun HomeScreenContent(
                         post = feed?.friendsPosts?.get(it),
                         modifier = Modifier.padding(vertical = 8.dp),
                         myProfilePicture = myProfilePicture,
+                        myUsername = feed?.userPosts?.user?.profilePicture?.url ?: "",
                         openDetailScreen = openDetailScreen
                     )
                 }
@@ -242,7 +246,8 @@ fun HomeScreenPreview() {
             topBar = {
                 BeFakeTopAppBarContent(
                     loginState = LoginState.LoggedIn,
-                    profilePicture = "https://picsum.photos/1000/1000"
+                    profilePicture = "https://picsum.photos/1000/1000",
+                    username = "username"
                 )
             }
         ) { padding ->
@@ -256,7 +261,8 @@ fun HomeScreenPreview() {
                     feed = feed.data.data,
                     state = HomeScreenState.Loaded,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    openDetailScreen = {_, _ -> }
+                    openDetailScreen = {_, _ -> },
+                    myUsername = "username"
                 )
             }
         }
@@ -277,7 +283,8 @@ fun HomeScreenLoadingPreview() {
             topBar = {
                 BeFakeTopAppBarContent(
                     loginState = LoginState.LoggedIn,
-                    profilePicture = "https://picsum.photos/1000/1000"
+                    profilePicture = "https://picsum.photos/1000/1000",
+                    username = "username"
                 )
             }
         ) { padding ->
@@ -291,7 +298,8 @@ fun HomeScreenLoadingPreview() {
                     feed = null,
                     state = HomeScreenState.Loading,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    openDetailScreen = {_, _ ->}
+                    openDetailScreen = {_, _ ->},
+                    myUsername = "username"
                 )
             }
         }

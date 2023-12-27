@@ -1,7 +1,6 @@
 package pizza.xyz.befake.model.dtos.feed
 
 import com.google.gson.annotations.SerializedName
-import pizza.xyz.befake.model.dtos.feed.ProfilePicture
 
 /*
 Copyright (c) 2023 Kotlin pizza.xyz.befake.model.dtos.feed.pizza.xyz.befake.model.dtos.friendsOfFriends.pizza.xyz.befake.model.dtos.me.Data Classes Generated from JSON powered by http://www.json2kotlin.com
@@ -19,5 +18,5 @@ data class User (
 
 	@SerializedName("id") val id : String,
 	@SerializedName("username") val username : String,
-	@SerializedName("profilePicture") val profilePicture : ProfilePicture
+	@SerializedName("profilePicture") val profilePicture : ProfilePicture?
 )
