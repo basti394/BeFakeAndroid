@@ -107,18 +107,21 @@ fun MainContent(
                 ) { paddingValues ->
                     HomeScreen(
                         paddingValues = paddingValues,
-                        openDetailScreen = { username, selectedPost -> navController.navigate("post/$username?$selectedPost") }
+                        openDetailScreen = { username, selectedPost, focusInput -> navController.navigate("post/$username?selectedPost=$selectedPost&focusInput=$focusInput") }
                     )
                 }
             }
             composable(
-                "post/{username}?{selectedPost}",
+                "post/{username}?selectedPost={selectedPost}&focusInput={focusInput}",
                 arguments = listOf(
                     navArgument("username") {
                         defaultValue = ""
                     },
                     navArgument("selectedPost") {
                         defaultValue = 0
+                    },
+                    navArgument("focusInput") {
+                        defaultValue = false
                     }
                 ),
                 exitTransition = {
@@ -134,8 +137,14 @@ fun MainContent(
             ) {
                 val username = it.arguments?.getString("username")
                 val selectedPost = it.arguments?.getInt("selectedPost")
+                val focusInput = it.arguments?.getBoolean("focusInput")
                 if (username.isNullOrBlank()) throw IllegalStateException("Username cannot be null or blank")
-                PostDetailScreen(username = username, selectedPost = selectedPost, onBack = { navController.popBackStack() })
+                PostDetailScreen(
+                    username = username,
+                    selectedPost = selectedPost,
+                    focusInput = focusInput,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
 

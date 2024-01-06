@@ -18,4 +18,6 @@
     <string name="view_comments">View %d comments</string>
     <string name="log_out_text">Sorry we had to log you out! Please login again.</string>
     <string name="search_for_your_country">Search for your Country</string>
+    <string name="schreibe_einen_kommentar">Write a comment...</string>
+    <string name="please_enter_your_phone_number">Please enter a phone number first.</string>
 </resources>

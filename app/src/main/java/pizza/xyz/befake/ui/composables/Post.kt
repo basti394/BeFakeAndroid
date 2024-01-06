@@ -105,7 +105,7 @@ fun Post(
     post: FriendsPosts?,
     myProfilePicture: String,
     myUsername: String,
-    openDetailScreen: (String, Int) -> Unit
+    openDetailScreen: (String, Int, Boolean) -> Unit
 ) {
 
     val state = rememberLazyListState()
@@ -192,7 +192,7 @@ fun Post(
                 ) {
                     PostImages(
                         post = post.posts[it],
-                        openDetailScreen = { openDetailScreen(post.user.username, current) }
+                        openDetailScreen = { focusInput -> openDetailScreen(post.user.username, current, focusInput) }
                     )
                 }
             }
@@ -217,7 +217,7 @@ fun Post(
                 post = post.posts[current],
                 myProfilePicture = myProfilePicture,
                 username = myUsername,
-                openDetailScreen = { openDetailScreen(post.user.username, current) }
+                openDetailScreen = { focusInput -> openDetailScreen(post.user.username, current, focusInput) }
             )
         }
     }
@@ -226,7 +226,7 @@ fun Post(
 @Composable
 fun PostImages(
     post: Posts,
-    openDetailScreen: () -> Unit
+    openDetailScreen: (Boolean) -> Unit
 ) {
 
     val context = LocalContext.current
@@ -269,7 +269,7 @@ fun PostImages(
 
     Box(
         modifier = Modifier
-            .width(LocalConfiguration.current.screenWidthDp.dp)
+            .width((LocalConfiguration.current.screenWidthDp + 1).dp)
             .clip(RoundedCornerShape(cornerRadius.dp))
             .onSizeChanged {
                 outerBoxSize = Offset(it.width.toFloat(), it.height.toFloat())
@@ -416,13 +416,13 @@ fun PostImages(
             Reactions(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .clickable { openDetailScreen() },
+                    .clickable { openDetailScreen(false) },
                 reactions = post.realMojis
             )
 
             ActionButtons(
                 modifier = Modifier.align(Alignment.BottomEnd),
-                openDetailScreen = { openDetailScreen() }
+                openDetailScreen = { focusInput -> openDetailScreen(focusInput) }
             )
 
             if (post.postType == "bts") {
@@ -525,7 +525,7 @@ fun Reactions(
 @Composable
 fun ActionButtons(
     modifier: Modifier = Modifier,
-    openDetailScreen: () -> Unit
+    openDetailScreen: (Boolean) -> Unit
 ) {
     val iconSize = remember { 35.dp }
     Box(
@@ -534,7 +534,7 @@ fun ActionButtons(
     ) {
         Column {
             IconButton(
-                onClick = openDetailScreen
+                onClick = { openDetailScreen(true) }
             ) {
                 Icon(
                     modifier = Modifier.size(iconSize),
@@ -545,12 +545,12 @@ fun ActionButtons(
             }
             Spacer(modifier = Modifier.height(8.dp))
             IconButton(
-                onClick = openDetailScreen
+                onClick = { openDetailScreen(false) }
             ) {
                 Icon(
                     modifier = Modifier.size(iconSize),
                     imageVector = Icons.Filled.TagFaces,
-                    contentDescription = "More",
+                    contentDescription = "Reactions",
                     tint = Color.White
                 )
             }
@@ -773,7 +773,7 @@ fun CaptionSection(
     post: Posts,
     myProfilePicture: String,
     username: String,
-    openDetailScreen: () -> Unit
+    openDetailScreen: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
@@ -788,7 +788,7 @@ fun CaptionSection(
         }
         Spacer(modifier = Modifier.height(8.dp))
         Row(
-            modifier = Modifier.clickable { openDetailScreen() },
+            modifier = Modifier.clickable { openDetailScreen(post.comments.size == 0) },
             verticalAlignment = Alignment.CenterVertically
         ) {
             ProfilePicture(modifier = Modifier.size(30.dp), profilePicture = myProfilePicture, username = username)
@@ -854,6 +854,6 @@ fun PostPreview() {
         post = friendsPost,
         myProfilePicture = "https://ui-avatars.com/api/?name=&background=808080&size=100",
         myUsername = "myUsername",
-        openDetailScreen = {_, _ ->}
+        openDetailScreen = {_, _, _ ->}
     )
 }

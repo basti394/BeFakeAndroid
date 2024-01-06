@@ -19,4 +19,6 @@
     <string name="view_comments">%d Kommentare anschauen</string>
     <string name="log_out_text">Wir mussten dich leider abmelden. Bitte melde dich neu an.</string>
     <string name="search_for_your_country">Suche nach deinem Land</string>
+    <string name="schreibe_einen_kommentar">Schreibe einen Kommentar...</string>
+    <string name="please_enter_your_phone_number">Bitte gebe zuerst eine Telefonnummer ein.</string>
 </resources>

@@ -1,6 +1,5 @@
 package pizza.xyz.befake.ui.screens
 
-import android.view.ViewTreeObserver
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,13 +14,15 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -29,7 +30,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,8 +42,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -192,13 +191,14 @@ fun LoginScreenContent(
                 onValueChange = onPhoneNumberChanged,
                 focusRequester = focusRequester,
                 onCountrySelected = onCountrySelected,
-                currentCountry = currentCountry
+                currentCountry = currentCountry,
+                send = onButtonClicked,
             )
             is LoginState.OTPCode -> OTPCodeInput(
                 value = otpCode,
                 onValueChange = onOptCodeChanged,
                 focusRequester = focusRequester,
-                onSubmit = onButtonClicked
+                onSubmit = onButtonClicked,
             )
             is LoginState.Error, is LoginState.Loading -> {
                 if ((loginState as LoginState.LoginStateWithPreviousState).previousState is LoginState.PhoneNumber) {
@@ -207,56 +207,26 @@ fun LoginScreenContent(
                         onValueChange = onPhoneNumberChanged,
                         focusRequester = null,
                         onCountrySelected = onCountrySelected,
-                        currentCountry = currentCountry
+                        currentCountry = currentCountry,
+                        send = onButtonClicked,
                     )
                 } else if (loginState.previousState is LoginState.OTPCode) {
                     OTPCodeInput(
                         value = otpCode,
                         onValueChange = onOptCodeChanged,
                         focusRequester = null,
-                        onSubmit = onButtonClicked
+                        onSubmit = onButtonClicked,
                     )
                 }
             }
             is LoginState.LoggedIn -> Spacer(modifier = Modifier)
         }
 
-        val view = LocalView.current
-
-        val (offset, setOffset) = remember { mutableStateOf(0.dp) }
-        val density = LocalDensity.current.density
-
-        DisposableEffect(view) {
-            val listener = ViewTreeObserver.OnPreDrawListener {
-                val rect = android.graphics.Rect()
-                view.getWindowVisibleDisplayFrame(rect)
-
-                val screenHeight = view.height
-                val keypadHeight = screenHeight - rect.bottom
-
-                if (keypadHeight > screenHeight * 0.15f) {
-                    // Keyboard is open
-                    setOffset((-keypadHeight / density).dp)
-                } else {
-                    // Keyboard is closed
-                    setOffset(0.dp)
-                }
-
-                true
-            }
-
-            view.viewTreeObserver.addOnPreDrawListener(listener)
-
-            onDispose {
-                view.viewTreeObserver.removeOnPreDrawListener(listener)
-            }
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .padding(bottom = 8.dp)
-                .offset(y = offset),
+                .imePadding()
+                .navigationBarsPadding(),
             verticalArrangement = Arrangement.Bottom
         ) {
             if (loginState is LoginState.Error && loginState.previousState is LoginState.OTPCode) {
@@ -346,9 +316,9 @@ fun PhoneNumberInput(
     onValueChange: (String) -> Unit,
     focusRequester: FocusRequester?,
     onCountrySelected: (Country) -> Unit,
-    currentCountry: Country
+    currentCountry: Country,
+    send: () -> Unit,
 ) {
-
 
     val textSelectionColors = TextSelectionColors(
         handleColor = Color.White,
@@ -397,8 +367,13 @@ fun PhoneNumberInput(
                     if (it.length <= 15) onValueChange(it)
                 },
                 cursorBrush = SolidColor(Color.White),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        send()
+                    }
+                ),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone
+                    keyboardType = KeyboardType.Phone,
                 )
             ) { innerTextField ->
                 if (value.isEmpty()) {
@@ -453,13 +428,14 @@ fun OTPCodeInput(
     value: String,
     onValueChange: (String) -> Unit,
     focusRequester: FocusRequester?,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
 ) {
 
     val textSelectionColors = TextSelectionColors(
         handleColor = Color.White,
         backgroundColor = Color.White,
     )
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(key1 = Unit) {
         focusRequester?.requestFocus()
@@ -480,10 +456,15 @@ fun OTPCodeInput(
                 if (it.length <= 6) onValueChange(it)
                 if (it.length == 6) {
                     onSubmit()
-                    focusRequester?.freeFocus()
+                    focusManager.clearFocus(true)
                 }
             },
             cursorBrush = SolidColor(Color.White),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    onSubmit()
+                }
+            ),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.NumberPassword
             ),

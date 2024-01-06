@@ -5,17 +5,22 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imeNestedScroll
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -47,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,19 +66,20 @@ import pizza.xyz.befake.R
 import pizza.xyz.befake.model.dtos.feed.Comment
 import pizza.xyz.befake.model.dtos.feed.Posts
 import pizza.xyz.befake.model.dtos.feed.RealMojis
+import pizza.xyz.befake.ui.composables.BeFakeInputField
 import pizza.xyz.befake.ui.composables.Dot
 import pizza.xyz.befake.ui.composables.ProfilePicture
 import pizza.xyz.befake.ui.viewmodel.PostDetailScreenViewModel
 import pizza.xyz.befake.utils.Utils
 import pizza.xyz.befake.utils.Utils.testFriendsPosts
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostDetailScreen(
     username: String,
     selectedPost: Int?,
+    focusInput: Boolean?,
     viewModel: PostDetailScreenViewModel = hiltViewModel(),
-    onBack: () -> Unit ,
+    onBack: () -> Unit,
 ) {
 
     val post by viewModel.post.collectAsStateWithLifecycle()
@@ -104,11 +111,12 @@ fun PostDetailScreen(
         username = username,
         takenAt = takenAt,
         posts = posts,
-        onBack = onBack
+        onBack = onBack,
+        focusInput = focusInput
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun PostDetailScreenContent(
     comments: List<Comment>?,
@@ -116,7 +124,8 @@ private fun PostDetailScreenContent(
     username: String,
     takenAt: String?,
     posts: List<Posts>?,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    focusInput: Boolean?
 ) {
     val haptic = LocalHapticFeedback.current
     var showBottomSheet by remember {
@@ -124,8 +133,20 @@ private fun PostDetailScreenContent(
     }
     val sheetState = rememberModalBottomSheetState()
 
+    var writeComment by remember {
+        mutableStateOf(focusInput ?: false)
+    }
+    var initialComment by remember {
+        mutableStateOf("")
+    }
+
     var currentReactionDetail by remember {
         mutableIntStateOf(0)
+    }
+
+    val onCommentClick: (String) -> Unit = {
+        writeComment = true
+        initialComment = "@$it"
     }
 
     Scaffold(
@@ -197,25 +218,51 @@ private fun PostDetailScreenContent(
             )
         }
 
-        Column(
+        val scrollState = rememberScrollState()
+
+        Box(
             modifier = Modifier
-                .padding(it)
-                .fillMaxSize()
         ) {
-            Posts(posts) { _ -> /*TODO*/ }
-            SeparatorLine()
-            Reactions(
-                reactions?.reversed(),
-                onReactionClick = { index ->
-                    currentReactionDetail = index
-                    showBottomSheet = true
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .imePadding()
+                    .imeNestedScroll()
+                    .padding(it)
+            ) {
+                item {
+                    Posts(posts) { _ -> /*TODO*/ }
+                    SeparatorLine()
+                    Reactions(
+                        reactions?.reversed(),
+                        onReactionClick = { index ->
+                            currentReactionDetail = index
+                            showBottomSheet = true
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+                    )
+                    SeparatorLine()
+                    Comments(
+                        comments = comments,
+                        userName = username,
+                        onClick = onCommentClick
+                    )
                 }
-            )
-            SeparatorLine()
-            Comments(
-                comments = comments,
-                userName = username
+            }
+
+            BeFakeInputField(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 8.dp)
+                    .padding(bottom = 8.dp)
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .fillMaxWidth(),
+                onChange = {},
+                onSubmit = {},
+                placeholder = stringResource(R.string.schreibe_einen_kommentar),
+                focus = writeComment,
+                initialValue = initialComment,
             )
         }
     }
@@ -401,40 +448,48 @@ fun ReactionDetail(
 @Composable
 fun Comments(
     comments: List<Comment>?,
-    userName: String?
+    userName: String?,
+    onClick: (String) -> Unit
 ) {
-    if (comments.isNullOrEmpty()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Noch keine Kommentare",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "Sei der Erste, der auf den Beitrag von $userName reagiert.",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center
-            )
-        }
-    } else {
-        LazyColumn(
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Top
-        ) {
-            items(
-                count = comments.size,
-                key = { index -> comments[index].id }
-            ) { index ->
-                Comment(comments[index])
+    Box(
+        modifier = Modifier
+    ) {
+        if (comments.isNullOrEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Noch keine Kommentare",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = "Sei der Erste, der auf den Beitrag von $userName reagiert.",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
+            LazyColumn(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top
+            ) {
+                items(
+                    count = comments.size,
+                    key = { index -> comments[index].id }
+                ) { index ->
+                    Comment(
+                        comment = comments[index],
+                        onClick = onClick
+                    )
+                }
             }
         }
     }
@@ -442,12 +497,14 @@ fun Comments(
 
 @Composable
 fun Comment(
-    comment: Comment
+    comment: Comment,
+    onClick: (String) -> Unit
 ) {
     Row(
         modifier = Modifier
             .padding(horizontal = 8.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable { onClick(comment.user.username) },
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -462,7 +519,7 @@ fun Comment(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp),
+                .padding(vertical = 8.dp),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
         ) {
@@ -479,7 +536,7 @@ fun Comment(
                 Dot()
                 Text(
                     text = Utils.getTime(comment.postedAt, false),
-                    color = Color.LightGray,
+                    color = Color.Gray,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     textAlign = TextAlign.Start
@@ -506,7 +563,8 @@ fun PostDetailScreenPreview() {
         username = testFriendsPosts.user.username,
         takenAt = testFriendsPosts.posts[0].takenAt,
         posts = testFriendsPosts.posts,
-        onBack = {}
+        onBack = {},
+        focusInput = false
     )
 }
 

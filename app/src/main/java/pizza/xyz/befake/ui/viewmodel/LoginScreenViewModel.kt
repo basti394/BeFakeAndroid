@@ -60,6 +60,9 @@ class LoginScreenViewModel @Inject constructor(
     }
 
     fun onLoginClicked() {
+        if (phoneNumber.value.isEmpty()) {
+            return
+        }
         val phoneNumberWithCountry = "${country.value.dialCode}${phoneNumber.value}"
         viewModelScope.launch {
             loginService.sendCode(LoginRequestDTO(phoneNumberWithCountry)).onSuccess {

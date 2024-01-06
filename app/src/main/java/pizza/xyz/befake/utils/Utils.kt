@@ -27,6 +27,7 @@ import com.google.gson.reflect.TypeToken
 import pizza.xyz.befake.R
 import pizza.xyz.befake.data.service.LoginService
 import pizza.xyz.befake.model.dtos.countrycode.Country
+import pizza.xyz.befake.model.dtos.feed.Comment
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
 import pizza.xyz.befake.model.dtos.feed.Location
 import pizza.xyz.befake.model.dtos.feed.Moment
@@ -195,7 +196,32 @@ object Utils {
             height = 2000,
             mediaType = "image"
         ),
-        comments = emptyList(),
+        comments = listOf(
+            Comment(
+                id = "1",
+                user = testFeedUser,
+                content = "comment",
+                postedAt = "2021-09-18T12:00:00.000Z"
+            ),
+            Comment(
+                id = "2",
+                user = testFeedUser,
+                content = "comment",
+                postedAt = "2021-09-18T12:00:00.000Z"
+            ),
+            Comment(
+                id = "3",
+                user = testFeedUser,
+                content = "comment",
+                postedAt = "2021-09-18T12:00:00.000Z"
+            ),
+            Comment(
+                id = "4",
+                user = testFeedUser,
+                content = "comment",
+                postedAt = "2021-09-18T12:00:00.000Z"
+            )
+        ),
         location = Location(
             latitude = 52.5207,
             longitude = 13.3733

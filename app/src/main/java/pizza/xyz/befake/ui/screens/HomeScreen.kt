@@ -49,20 +49,18 @@ import pizza.xyz.befake.utils.Utils.testFeedUser
 fun HomeScreen(
     paddingValues: PaddingValues,
     homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
-    openDetailScreen: (String, Int) -> Unit
+    openDetailScreen: (String, Int, Boolean) -> Unit
 ) {
 
     val feed by homeScreenViewModel.feed.collectAsStateWithLifecycle()
     val state by homeScreenViewModel.state.collectAsStateWithLifecycle()
     val myProfilePicture by homeScreenViewModel.myProfilePicture.collectAsStateWithLifecycle()
-    val myUsername by homeScreenViewModel.myUsername.collectAsStateWithLifecycle()
 
     HomeScreenContent(
         feed = feed?.data,
         state = state,
         myProfilePicture = myProfilePicture,
         openDetailScreen = openDetailScreen,
-        myUsername = myUsername
     )
 }
 
@@ -71,8 +69,7 @@ fun HomeScreenContent(
     feed: PostData?,
     state: HomeScreenState,
     myProfilePicture: String,
-    myUsername: String,
-    openDetailScreen: (String, Int) -> Unit
+    openDetailScreen: (String, Int, Boolean) -> Unit
 ) {
 
     LazyColumn(
@@ -261,8 +258,7 @@ fun HomeScreenPreview() {
                     feed = feed.data.data,
                     state = HomeScreenState.Loaded,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    openDetailScreen = {_, _ -> },
-                    myUsername = "username"
+                    openDetailScreen = {_, _, _ -> },
                 )
             }
         }
@@ -270,8 +266,6 @@ fun HomeScreenPreview() {
 
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun HomeScreenLoadingPreview() {
@@ -298,8 +292,7 @@ fun HomeScreenLoadingPreview() {
                     feed = null,
                     state = HomeScreenState.Loading,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    openDetailScreen = {_, _ ->},
-                    myUsername = "username"
+                    openDetailScreen = {_, _, _ ->},
                 )
             }
         }

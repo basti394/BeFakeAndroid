@@ -1,13 +1,17 @@
 package pizza.xyz.befake.ui.composables
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,43 +21,57 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pizza.xyz.befake.utils.Utils
 
 @Composable
-fun CountrySearchBar(
+fun BeFakeInputField(
     modifier: Modifier = Modifier,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     onTrailingIconClick: () -> Unit = { },
-    onSearch: (String) -> Unit,
+    onChange: (String) -> Unit,
+    onSubmit: (String) -> Unit = { },
     placeholder: String,
+    clearValueOnSubmit: Boolean = false,
+    focus: Boolean,
+    initialValue: String = ""
 ) {
 
     val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
 
-    var searching by remember { mutableStateOf(false) }
+    var active by remember { mutableStateOf(focus) }
 
-    LaunchedEffect(searching){
-        if (searching) {
+    LaunchedEffect(active){
+        if (active) {
             focusRequester.requestFocus()
+        } else {
+            focusManager.clearFocus(true)
         }
     }
 
-    var searchValue by remember { mutableStateOf("") }
+    var inputValue by remember { mutableStateOf(initialValue) }
 
-    LaunchedEffect(key1 = searchValue) {
-        onSearch(searchValue)
+    LaunchedEffect(key1 = inputValue) {
+        onChange(inputValue)
     }
 
-    Box(
+    Row(
         modifier = modifier
-            .clickable { searching = true }
+            .height(50.dp)
+            .background(Utils.lightBlack, RoundedCornerShape(cornerRadius.dp))
+            .clip(RoundedCornerShape(cornerRadius))
+            .clickable { active = true }
     ) {
         Row(
             modifier = Modifier
@@ -67,7 +85,7 @@ fun CountrySearchBar(
                 if (leadingIcon != null) {
                     leadingIcon()
                 }
-                if (!searching) {
+                if (!active) {
                     Text(
                         text = placeholder,
                         color = Color.Gray,
@@ -81,21 +99,31 @@ fun CountrySearchBar(
                         modifier = Modifier
                             .focusRequester(focusRequester)
                             .padding(horizontal = 8.dp),
-                        value = searchValue,
+                        value = inputValue,
                         onValueChange = {
-                            searchValue = it
+                            inputValue = it
                         },
                         singleLine = true,
-                        cursorBrush = SolidColor(Color.White)
+                        cursorBrush = SolidColor(Color.White),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                onSubmit(inputValue)
+                                focusManager.clearFocus(true)
+                                if (clearValueOnSubmit) {
+                                    active = false
+                                    inputValue = ""
+                                }
+                            }
+                        )
                     )
                 }
             }
-            if (trailingIcon != null && searching) {
+            if (trailingIcon != null && active) {
                 Box(
                     modifier = Modifier.clickable {
                         onTrailingIconClick()
-                        searchValue = ""
-                        searching = false
+                        inputValue = ""
+                        active = false
                     }
                 ) {
                     trailingIcon()
@@ -103,4 +131,22 @@ fun CountrySearchBar(
             }
         }
     }
+}
+
+@Composable
+@Preview
+fun BeFakeInputFieldPreview() {
+    BeFakeInputField(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        leadingIcon = {},
+        trailingIcon = {},
+        onTrailingIconClick = { },
+        onChange = { },
+        onSubmit = { },
+        placeholder = "Phone Number",
+        clearValueOnSubmit = false,
+        focus = true
+    )
 }
