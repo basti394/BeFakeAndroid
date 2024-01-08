@@ -12,6 +12,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
@@ -137,13 +140,14 @@ fun MainContent(
             ) {
                 val username = it.arguments?.getString("username")
                 val selectedPost = it.arguments?.getInt("selectedPost")
-                val focusInput = it.arguments?.getBoolean("focusInput")
+                var focusInput by remember { mutableStateOf(it.arguments?.getBoolean("focusInput")) }
                 if (username.isNullOrBlank()) throw IllegalStateException("Username cannot be null or blank")
                 PostDetailScreen(
                     username = username,
                     selectedPost = selectedPost,
                     focusInput = focusInput,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onCommentClick = { focusInput = true }
                 )
             }
         }

@@ -43,14 +43,14 @@ fun BeFakeInputField(
     onSubmit: (String) -> Unit = { },
     placeholder: String,
     clearValueOnSubmit: Boolean = false,
-    focus: Boolean,
+    focus: Boolean?,
     initialValue: String = ""
 ) {
 
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    var active by remember { mutableStateOf(focus) }
+    var active by remember { mutableStateOf(focus ?: false) }
 
     LaunchedEffect(active){
         if (active) {

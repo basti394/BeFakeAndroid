@@ -5,14 +5,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -80,6 +78,7 @@ fun PostDetailScreen(
     focusInput: Boolean?,
     viewModel: PostDetailScreenViewModel = hiltViewModel(),
     onBack: () -> Unit,
+    onCommentClick: () -> Unit
 ) {
 
     val post by viewModel.post.collectAsStateWithLifecycle()
@@ -112,11 +111,12 @@ fun PostDetailScreen(
         takenAt = takenAt,
         posts = posts,
         onBack = onBack,
-        focusInput = focusInput
+        focusInput = focusInput,
+        onCommentClick = onCommentClick
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PostDetailScreenContent(
     comments: List<Comment>?,
@@ -125,7 +125,8 @@ private fun PostDetailScreenContent(
     takenAt: String?,
     posts: List<Posts>?,
     onBack: () -> Unit,
-    focusInput: Boolean?
+    focusInput: Boolean?,
+    onCommentClick: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
     var showBottomSheet by remember {
@@ -133,9 +134,6 @@ private fun PostDetailScreenContent(
     }
     val sheetState = rememberModalBottomSheetState()
 
-    var writeComment by remember {
-        mutableStateOf(focusInput ?: false)
-    }
     var initialComment by remember {
         mutableStateOf("")
     }
@@ -144,10 +142,6 @@ private fun PostDetailScreenContent(
         mutableIntStateOf(0)
     }
 
-    val onCommentClick: (String) -> Unit = {
-        writeComment = true
-        initialComment = "@$it"
-    }
 
     Scaffold(
         containerColor = Color.Black,
@@ -205,6 +199,29 @@ private fun PostDetailScreenContent(
                 },
                 colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color.Transparent)
             )
+        },
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Black)
+            ) {
+                SeparatorLine(
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+                BeFakeInputField(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .navigationBarsPadding()
+                        .imePadding()
+                        .fillMaxWidth(),
+                    onChange = {},
+                    onSubmit = {},
+                    placeholder = stringResource(R.string.schreibe_einen_kommentar),
+                    focus = focusInput,
+                    initialValue = initialComment,
+                )
+            }
         }
     ) {
         if (reactions?.isNotEmpty() == true) {
@@ -217,18 +234,13 @@ private fun PostDetailScreenContent(
                 realMoji = reactions.reversed()[currentReactionDetail]
             )
         }
-
-        val scrollState = rememberScrollState()
-
         Box(
             modifier = Modifier
+                .fillMaxHeight()
         ) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .imePadding()
-                    .imeNestedScroll()
-                    .padding(it)
+                    .padding(bottom = it.calculateBottomPadding())
             ) {
                 item {
                     Posts(posts) { _ -> /*TODO*/ }
@@ -242,36 +254,57 @@ private fun PostDetailScreenContent(
                         }
                     )
                     SeparatorLine()
-                    Comments(
-                        comments = comments,
-                        userName = username,
-                        onClick = onCommentClick
-                    )
+                }
+
+                if (comments.isNullOrEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Noch keine Kommentare",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Normal,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Sei der Erste, der auf den Beitrag von $username reagiert.",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Normal,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    items(
+                        count = comments.size,
+                        key = { index -> comments[index].id }
+                    ) { index ->
+                        Comment(
+                            comment = comments[index],
+                            onClick = {
+                                initialComment = "@${comments[index].user.username}"
+                                onCommentClick()
+                            }
+                        )
+                    }
                 }
             }
-
-            BeFakeInputField(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 8.dp)
-                    .padding(bottom = 8.dp)
-                    .navigationBarsPadding()
-                    .imePadding()
-                    .fillMaxWidth(),
-                onChange = {},
-                onSubmit = {},
-                placeholder = stringResource(R.string.schreibe_einen_kommentar),
-                focus = writeComment,
-                initialValue = initialComment,
-            )
         }
     }
 }
 
 @Composable
-fun SeparatorLine() {
+fun SeparatorLine(
+    modifier: Modifier = Modifier
+) {
     Spacer(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(1.dp)
             .background(Color.DarkGray)
@@ -451,45 +484,42 @@ fun Comments(
     userName: String?,
     onClick: (String) -> Unit
 ) {
-    Box(
-        modifier = Modifier
-    ) {
-        if (comments.isNullOrEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Noch keine Kommentare",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = TextAlign.Center
+    if (comments.isNullOrEmpty()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Noch keine Kommentare",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "Sei der Erste, der auf den Beitrag von $userName reagiert.",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                textAlign = TextAlign.Center
+            )
+        }
+    } else {
+        LazyColumn(
+            userScrollEnabled = false,
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Top
+        ) {
+            items(
+                count = comments.size,
+                key = { index -> comments[index].id }
+            ) { index ->
+                Comment(
+                    comment = comments[index],
+                    onClick = onClick
                 )
-                Text(
-                    text = "Sei der Erste, der auf den Beitrag von $userName reagiert.",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = TextAlign.Center
-                )
-            }
-        } else {
-            LazyColumn(
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.Top
-            ) {
-                items(
-                    count = comments.size,
-                    key = { index -> comments[index].id }
-                ) { index ->
-                    Comment(
-                        comment = comments[index],
-                        onClick = onClick
-                    )
-                }
             }
         }
     }
@@ -564,7 +594,8 @@ fun PostDetailScreenPreview() {
         takenAt = testFriendsPosts.posts[0].takenAt,
         posts = testFriendsPosts.posts,
         onBack = {},
-        focusInput = false
+        focusInput = false,
+        onCommentClick = {}
     )
 }
 
