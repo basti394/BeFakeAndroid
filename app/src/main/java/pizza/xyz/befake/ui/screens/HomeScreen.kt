@@ -49,7 +49,7 @@ import pizza.xyz.befake.utils.Utils.testFeedUser
 fun HomeScreen(
     paddingValues: PaddingValues,
     homeScreenViewModel: HomeScreenViewModel = hiltViewModel(),
-    openDetailScreen: (String, Int, Boolean) -> Unit
+    openDetailScreen: (String, Int, Boolean, Boolean) -> Unit
 ) {
 
     val feed by homeScreenViewModel.feed.collectAsStateWithLifecycle()
@@ -69,7 +69,7 @@ fun HomeScreenContent(
     feed: PostData?,
     state: HomeScreenState,
     myProfilePicture: String,
-    openDetailScreen: (String, Int, Boolean) -> Unit
+    openDetailScreen: (String, Int, Boolean, Boolean) -> Unit
 ) {
 
     LazyColumn(
@@ -258,7 +258,7 @@ fun HomeScreenPreview() {
                     feed = feed.data.data,
                     state = HomeScreenState.Loaded,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    openDetailScreen = {_, _, _ -> },
+                    openDetailScreen = {_, _, _, _ -> },
                 )
             }
         }
@@ -292,7 +292,7 @@ fun HomeScreenLoadingPreview() {
                     feed = null,
                     state = HomeScreenState.Loading,
                     myProfilePicture = "https://picsum.photos/1000/1000",
-                    openDetailScreen = {_, _, _ ->},
+                    openDetailScreen = {_, _, _, _ ->},
                 )
             }
         }

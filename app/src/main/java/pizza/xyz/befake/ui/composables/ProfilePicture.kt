@@ -12,7 +12,7 @@ import pizza.xyz.befake.utils.Utils
 fun ProfilePicture(
     modifier: Modifier,
     profilePicture: String?,
-    username: String
+    username: String?
 ) {
     AsyncImage(
         modifier = modifier.clip(CircleShape),
@@ -22,9 +22,9 @@ fun ProfilePicture(
     )
 }
 
-private fun getProfilePictureUrl(profilePicture: String?, username: String): String {
+private fun getProfilePictureUrl(profilePicture: String?, username: String?): String {
     return profilePicture
-        ?: if (username.isEmpty()) {
+        ?: if (username.isNullOrEmpty()) {
             "https://ui-avatars.com/api/?name=&background=8B8B8B&size=100"
         } else {
             "https://ui-avatars.com/api/?name=${username.first()}&background=random&size=100"

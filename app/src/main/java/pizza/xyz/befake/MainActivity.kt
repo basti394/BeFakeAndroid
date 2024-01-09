@@ -27,6 +27,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
+import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.ui.composables.BeFakeTopAppBar
 import pizza.xyz.befake.ui.screens.HomeScreen
 import pizza.xyz.befake.ui.screens.LoginScreen
@@ -47,8 +48,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel: LoginScreenViewModel = hiltViewModel()
             val loginState by viewModel.loginState.collectAsStateWithLifecycle()
+            val user by viewModel.user.collectAsStateWithLifecycle()
             BeFakeTheme {
-                MainContent(loginState)
+                MainContent(
+                    loginState,
+                    user
+                )
             }
         }
 
@@ -59,7 +64,8 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContent(
-    loginState: LoginState
+    loginState: LoginState,
+    user: User?
 ) {
     if (
         loginState != LoginState.LoggedIn
@@ -67,7 +73,8 @@ fun MainContent(
         Scaffold(
             topBar = {
                 BeFakeTopAppBar(
-                    loginState
+                    loginState,
+                    user
                 )
             },
             containerColor = Color.Black
@@ -103,19 +110,20 @@ fun MainContent(
                 Scaffold(
                     topBar = {
                         BeFakeTopAppBar(
-                            loginState
+                            loginState,
+                            user
                         )
                     },
                     containerColor = Color.Black
                 ) { paddingValues ->
                     HomeScreen(
                         paddingValues = paddingValues,
-                        openDetailScreen = { username, selectedPost, focusInput -> navController.navigate("post/$username?selectedPost=$selectedPost&focusInput=$focusInput") }
+                        openDetailScreen = { username, selectedPost, focusInput, focusRealMojis -> navController.navigate("post/$username?selectedPost=$selectedPost&focusInput=$focusInput&focusRealMojis=$focusRealMojis") }
                     )
                 }
             }
             composable(
-                "post/{username}?selectedPost={selectedPost}&focusInput={focusInput}",
+                "post/{username}?selectedPost={selectedPost}&focusInput={focusInput}&focusRealMojis={focusRealMojis}",
                 arguments = listOf(
                     navArgument("username") {
                         defaultValue = ""
@@ -124,6 +132,9 @@ fun MainContent(
                         defaultValue = 0
                     },
                     navArgument("focusInput") {
+                        defaultValue = false
+                    },
+                    navArgument("focusRealMojis") {
                         defaultValue = false
                     }
                 ),
@@ -141,13 +152,16 @@ fun MainContent(
                 val username = it.arguments?.getString("username")
                 val selectedPost = it.arguments?.getInt("selectedPost")
                 var focusInput by remember { mutableStateOf(it.arguments?.getBoolean("focusInput")) }
+                val focusRealMojis = it.arguments?.getBoolean("focusRealMojis")
                 if (username.isNullOrBlank()) throw IllegalStateException("Username cannot be null or blank")
                 PostDetailScreen(
-                    username = username,
+                    postUsername = username,
                     selectedPost = selectedPost,
                     focusInput = focusInput,
                     onBack = { navController.popBackStack() },
-                    onCommentClick = { focusInput = true }
+                    onCommentClick = { focusInput = true },
+                    focusRealMojis = focusRealMojis,
+                    myUser = user
                 )
             }
         }

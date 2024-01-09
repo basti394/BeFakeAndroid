@@ -21,7 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -31,20 +31,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import pizza.xyz.befake.ui.viewmodel.BeFakeTopAppBarViewModel
+import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.ui.viewmodel.LoginState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BeFakeTopAppBar(
     loginState: LoginState,
-    viewModel: BeFakeTopAppBarViewModel = hiltViewModel()
+    user: User?,
 ) {
 
-    val profilePicture by viewModel.profilePicture.collectAsStateWithLifecycle()
-    val username by viewModel.username.collectAsStateWithLifecycle()
+    val profilePicture = remember(user) { user?.profilePicture }
+    val username = remember(user) { user?.username }
 
     BeFakeTopAppBarContent(loginState = loginState, profilePicture = profilePicture?.url, username = username)
 }
@@ -54,7 +52,7 @@ fun BeFakeTopAppBar(
 fun BeFakeTopAppBarContent(
     loginState: LoginState,
     profilePicture: String?,
-    username: String
+    username: String?
 ) {
     Column {
         TopAppBar(
@@ -84,7 +82,7 @@ fun BeFakeTopAppBarContent(
 fun Header(
     loginState: LoginState,
     profilePicture: String?,
-    username: String
+    username: String?
 ) {
     Box(
         modifier = Modifier

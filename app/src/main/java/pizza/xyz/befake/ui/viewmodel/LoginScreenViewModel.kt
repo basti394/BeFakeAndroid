@@ -9,20 +9,27 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import pizza.xyz.befake.R
+import pizza.xyz.befake.data.service.FriendsService
 import pizza.xyz.befake.data.service.LoginService
 import pizza.xyz.befake.model.dtos.countrycode.Country
+import pizza.xyz.befake.model.dtos.feed.ProfilePicture
+import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.model.dtos.login.LoginRequestDTO
 import pizza.xyz.befake.model.dtos.verify.VerifyOTPRequestDTO
 import pizza.xyz.befake.utils.Utils.getCountries
+import pizza.xyz.befake.utils.Utils.handle
 import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
 class LoginScreenViewModel @Inject constructor(
     private val loginService: LoginService,
-) : ViewModel() {
+    private val friendsService: FriendsService,
+    ) : ViewModel() {
 
     val loginState = loginService.loginState
+
+    val user: MutableStateFlow<User?> = MutableStateFlow(null)
 
     private val _phoneNumber = MutableStateFlow("")
     val phoneNumber = _phoneNumber.asStateFlow()
@@ -43,6 +50,22 @@ class LoginScreenViewModel @Inject constructor(
         runBlocking(Dispatchers.IO) {
             loginService.checkIfLoggedIn()
             setDefaultCountry()
+        }
+        viewModelScope.launch {
+            loginService.loginState.collect {
+                if (it is LoginState.LoggedIn) {
+                    suspend { friendsService.me() }.handle(
+                        onSuccess = { me ->
+                            user.value = User(
+                                me.data.id,
+                                me.data.username,
+                                me.data.profilePicture?.let { pb -> ProfilePicture(pb.url, pb.height, pb.width) },
+                            )
+                        },
+                        loginService = loginService
+                    )
+                }
+            }
         }
     }
 

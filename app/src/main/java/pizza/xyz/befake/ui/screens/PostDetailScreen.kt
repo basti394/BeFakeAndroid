@@ -64,6 +64,7 @@ import pizza.xyz.befake.R
 import pizza.xyz.befake.model.dtos.feed.Comment
 import pizza.xyz.befake.model.dtos.feed.Posts
 import pizza.xyz.befake.model.dtos.feed.RealMojis
+import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.ui.composables.BeFakeInputField
 import pizza.xyz.befake.ui.composables.Dot
 import pizza.xyz.befake.ui.composables.ProfilePicture
@@ -73,12 +74,14 @@ import pizza.xyz.befake.utils.Utils.testFriendsPosts
 
 @Composable
 fun PostDetailScreen(
-    username: String,
+    postUsername: String,
+    myUser: User?,
     selectedPost: Int?,
     focusInput: Boolean?,
     viewModel: PostDetailScreenViewModel = hiltViewModel(),
     onBack: () -> Unit,
-    onCommentClick: () -> Unit
+    onCommentClick: () -> Unit,
+    focusRealMojis: Boolean?
 ) {
 
     val post by viewModel.post.collectAsStateWithLifecycle()
@@ -99,20 +102,25 @@ fun PostDetailScreen(
     val posts = remember(current, post) {
         post?.posts
     }
+    val myUserId = remember(myUser) {
+        myUser?.id ?: ""
+    }
 
-    LaunchedEffect(key1 = username) {
-        viewModel.getPost(username)
+    LaunchedEffect(key1 = postUsername) {
+        viewModel.getPost(postUsername)
     }
 
     PostDetailScreenContent(
         comments = comments,
         reactions = reactions,
-        username = username,
+        username = postUsername,
         takenAt = takenAt,
         posts = posts,
         onBack = onBack,
         focusInput = focusInput,
-        onCommentClick = onCommentClick
+        onCommentClick = onCommentClick,
+        focusRealMojis = focusRealMojis,
+        myUserId = myUserId
     )
 }
 
@@ -126,11 +134,13 @@ private fun PostDetailScreenContent(
     posts: List<Posts>?,
     onBack: () -> Unit,
     focusInput: Boolean?,
-    onCommentClick: () -> Unit
+    onCommentClick: () -> Unit,
+    focusRealMojis: Boolean?,
+    myUserId: String,
 ) {
     val haptic = LocalHapticFeedback.current
     var showBottomSheet by remember {
-        mutableStateOf(false)
+        mutableStateOf(focusRealMojis ?: false)
     }
     val sheetState = rememberModalBottomSheetState()
 
@@ -247,6 +257,7 @@ private fun PostDetailScreenContent(
                     SeparatorLine()
                     Reactions(
                         reactions?.reversed(),
+                        myUserId = myUserId,
                         onReactionClick = { index ->
                             currentReactionDetail = index
                             showBottomSheet = true
@@ -322,6 +333,7 @@ fun Posts(
 @Composable
 fun Reactions(
     realMojis: List<RealMojis>?,
+    myUserId: String,
     onReactionClick: (Int) -> Unit
 ) {
     if (realMojis.isNullOrEmpty()) {
@@ -347,10 +359,33 @@ fun Reactions(
             )
         }
     } else {
-        Box(
+        val containsMyRealMoji = realMojis.any { it.user.id == myUserId }
+        val sortedRealMojis = if (containsMyRealMoji) {
+            val index = realMojis.indexOfFirst { it.user.id == myUserId }
+            val tempList = realMojis.toMutableList()
+            val removed = tempList.removeAt(index)
+            tempList.add(0, removed)
+            tempList
+        } else {
+            realMojis
+        }
+        Row(
             modifier = Modifier
-                .height(150.dp)
+                .height(150.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
         ) {
+            if (containsMyRealMoji) {
+                Reaction(
+                    modifier = Modifier.padding(start = 10.dp),
+                    realMoji = sortedRealMojis.first(),
+                    onReactionClick = { onReactionClick(0) }
+                )
+                Spacer(
+                    modifier = Modifier
+                        .width(10.dp)
+                )
+            }
             LazyRow(
                 modifier = Modifier
                     .fillMaxSize(),
@@ -360,39 +395,14 @@ fun Reactions(
                 item {
                     Spacer(modifier = Modifier.width(10.dp))
                 }
-                items(realMojis?.size ?: 0) { index ->
-                    val realMoji = realMojis?.get(index)
-                    Column(
-                        modifier = Modifier
-                            .padding(horizontal = 10.dp)
-                            .width(90.dp)
-                            .clickable { onReactionClick(index) },
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                items(sortedRealMojis?.size ?: 0) { index ->
+                    if (index == 0 && containsMyRealMoji) return@items
+                    val realMoji = sortedRealMojis?.get(index)
+                    Reaction(
+                        modifier = if (index == 1) Modifier.padding(end = 10.dp) else Modifier.padding(horizontal = 10.dp),
+                        realMoji = realMoji
                     ) {
-                        Box {
-                            AsyncImage(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(CircleShape),
-                                placeholder = Utils.debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
-                                model = realMoji?.media?.url,
-                                contentDescription = "profilePicture"
-                            )
-                            Text(
-                                modifier = Modifier.align(Alignment.BottomEnd),
-                                text = realMoji?.emoji ?: "",
-                                fontSize = 20.sp,
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            text = realMoji?.user?.username ?: "",
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        onReactionClick(index)
                     }
                 }
                 item {
@@ -400,6 +410,45 @@ fun Reactions(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun Reaction(
+    modifier: Modifier = Modifier,
+    realMoji: RealMojis?,
+    onReactionClick: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .width(90.dp)
+            .clickable { onReactionClick() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box {
+            AsyncImage(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape),
+                placeholder = Utils.debugPlaceholderProfilePicture(id = R.drawable.profile_picture_example),
+                model = realMoji?.media?.url,
+                contentDescription = "profilePicture"
+            )
+            Text(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                text = realMoji?.emoji ?: "",
+                fontSize = 20.sp,
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            text = realMoji?.user?.username ?: "",
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
 
@@ -595,7 +644,9 @@ fun PostDetailScreenPreview() {
         posts = testFriendsPosts.posts,
         onBack = {},
         focusInput = false,
-        onCommentClick = {}
+        onCommentClick = {},
+        focusRealMojis = false,
+        myUserId = testFriendsPosts.user.id
     )
 }
 

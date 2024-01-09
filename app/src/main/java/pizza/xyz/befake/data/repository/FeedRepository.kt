@@ -43,7 +43,7 @@ class FeedRepositoryImpl @Inject constructor(
                         return@handle
                     } else {
                         val id = UUID.randomUUID()
-                        postDAO.insertPostData( formatFeed(data, id))
+                        postDAO.insertPostData(formatFeed(data, id))
                         return@handle
                     }
                 }
@@ -57,8 +57,11 @@ class FeedRepositoryImpl @Inject constructor(
     }
 
     private fun formatFeed(postData: PostData, id: UUID) : Post {
-        val pData = postData.copy(
+        var pData = postData.copy(
             friendsPosts = postData.friendsPosts.map { it.copy(posts = it.posts.sortedBy { post -> post.creationDate }) }.sortedBy { it.posts.last().creationDate }.reversed()
+        )
+        pData = pData.copy(
+            //TODO: maybe create user service to acces user from everywhere
         )
         return Post(id, pData)
     }
