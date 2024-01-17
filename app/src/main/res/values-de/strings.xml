@@ -21,4 +21,6 @@
     <string name="search_for_your_country">Suche nach deinem Land</string>
     <string name="schreibe_einen_kommentar">Schreibe einen Kommentar...</string>
     <string name="please_enter_your_phone_number">Bitte gebe zuerst eine Telefonnummer ein.</string>
+    <string name="yesterday_at">Gestern um&#160;</string>
+    <string name="reply">Antworten</string>
 </resources>

@@ -84,9 +84,11 @@ import pizza.xyz.befake.model.dtos.feed.Location
 import pizza.xyz.befake.model.dtos.feed.Moment
 import pizza.xyz.befake.model.dtos.feed.Posts
 import pizza.xyz.befake.model.dtos.feed.RealMojis
+import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.utils.Utils
 import pizza.xyz.befake.utils.Utils.debugPlaceholderPost
 import pizza.xyz.befake.utils.Utils.debugPlaceholderProfilePicture
+import pizza.xyz.befake.utils.Utils.formatRealMojis
 import pizza.xyz.befake.utils.Utils.shimmerBrush
 import pizza.xyz.befake.utils.Utils.testFeedPostLateThreeMinLocationBerlin
 import pizza.xyz.befake.utils.Utils.testFeedPostNoLocation
@@ -103,8 +105,7 @@ const val cornerRadius = 16
 fun Post(
     modifier: Modifier = Modifier,
     post: FriendsPosts?,
-    myProfilePicture: String,
-    myUsername: String,
+    myUser: User?,
     openDetailScreen: (String, Int, Boolean, Boolean) -> Unit
 ) {
 
@@ -192,6 +193,7 @@ fun Post(
                 ) {
                     PostImages(
                         post = post.posts[it],
+                        myUser = myUser,
                         openDetailScreen = { focusInput, focusRealMojis -> openDetailScreen(post.user.username, current, focusInput, focusRealMojis) }
                     )
                 }
@@ -215,8 +217,8 @@ fun Post(
 
             CaptionSection(
                 post = post.posts[current],
-                myProfilePicture = myProfilePicture,
-                username = myUsername,
+                myProfilePicture = myUser?.profilePicture?.url ?: "",
+                username = myUser?.username ?: "",
                 openDetailScreen = { focusInput -> openDetailScreen(post.user.username, current, focusInput, false) }
             )
         }
@@ -226,6 +228,7 @@ fun Post(
 @Composable
 fun PostImages(
     post: Posts,
+    myUser: User?,
     openDetailScreen: (Boolean, Boolean) -> Unit
 ) {
 
@@ -416,8 +419,8 @@ fun PostImages(
             Reactions(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .clickable { openDetailScreen(false, true) },
-                reactions = post.realMojis
+                    .clickable { openDetailScreen(false, false) },
+                reactions = formatRealMojis(post.realMojis, myUser?.id)
             )
 
             ActionButtons(
@@ -479,7 +482,7 @@ fun Reactions(
             .fillMaxWidth(),
         contentAlignment = Alignment.CenterStart
     ) {
-        val reactionsPreview = reactions.takeLast(2)
+        val reactionsPreview = reactions.reversed().takeLast(2)
         val rest = reactions.size - reactionsPreview.size
         if (rest > 0) {
             Box(
@@ -705,7 +708,7 @@ fun Header(
                         Text(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            text = Utils.getTime(time, !isLate),
+                            text = Utils.getTime(time, !isLate, context),
                             color = Color.Gray,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal
@@ -852,8 +855,11 @@ fun PostPreview() {
 
     Post(
         post = friendsPost,
-        myProfilePicture = "https://ui-avatars.com/api/?name=&background=808080&size=100",
-        myUsername = "myUsername",
+        myUser = User(
+            id = "1",
+            username = "test",
+            profilePicture = null
+        ),
         openDetailScreen = {_, _, _, _ ->}
     )
 }

@@ -1,6 +1,7 @@
 package pizza.xyz.befake.model.dtos.me
 
 import com.google.gson.annotations.SerializedName
+import pizza.xyz.befake.model.dtos.feed.ProfilePicture
 
 /*
 Copyright (c) 2023 Kotlin pizza.xyz.befake.model.dtos.me.Data Classes Generated from JSON powered by http://www.json2kotlin.com

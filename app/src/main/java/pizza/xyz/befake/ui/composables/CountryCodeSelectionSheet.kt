@@ -128,7 +128,7 @@ fun CountryCodeSelectionSheetContent(
                 )
                 BeFakeInputField(
                     modifier = Modifier
-                        .padding(horizontal = 8.dp)
+                        .padding(horizontal = 8.dp, vertical = 8.dp)
                         .fillMaxWidth(),
                     trailingIcon = {
                         Icon(
@@ -139,7 +139,8 @@ fun CountryCodeSelectionSheetContent(
                     },
                     onChange = onSearch,
                     placeholder = stringResource(R.string.search_for_your_country),
-                    focus = false
+                    focus = false,
+                    initialValue = ""
                 )
                 LazyColumn(
                     modifier = Modifier

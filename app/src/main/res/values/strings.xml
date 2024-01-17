@@ -20,4 +20,6 @@
     <string name="search_for_your_country">Search for your Country</string>
     <string name="schreibe_einen_kommentar">Write a comment...</string>
     <string name="please_enter_your_phone_number">Please enter a phone number first.</string>
+    <string name="yesterday_at">Yesterday at&#160;</string>
+    <string name="reply">Reply</string>
 </resources>

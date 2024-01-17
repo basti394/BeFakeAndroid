@@ -55,11 +55,17 @@ class LoginScreenViewModel @Inject constructor(
             loginService.loginState.collect {
                 if (it is LoginState.LoggedIn) {
                     suspend { friendsService.me() }.handle(
-                        onSuccess = { me ->
+                        onSuccess = {
                             user.value = User(
-                                me.data.id,
-                                me.data.username,
-                                me.data.profilePicture?.let { pb -> ProfilePicture(pb.url, pb.height, pb.width) },
+                                it.data.id,
+                                it.data.username,
+                                it.data.profilePicture?.let { pb ->
+                                    ProfilePicture(
+                                        pb.url,
+                                        pb.height,
+                                        pb.width
+                                    )
+                                },
                             )
                         },
                         loginService = loginService

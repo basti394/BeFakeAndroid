@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import pizza.xyz.befake.data.repository.FeedRepository
 import pizza.xyz.befake.data.service.FriendsService
 import pizza.xyz.befake.data.service.LoginService
+import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.model.entities.Post
 import pizza.xyz.befake.utils.Utils.handle
 import javax.inject.Inject
@@ -28,20 +29,17 @@ class HomeScreenViewModel @Inject constructor(
     private val _state: MutableStateFlow<HomeScreenState> = MutableStateFlow(HomeScreenState.Loading)
     val state: StateFlow<HomeScreenState> = _state.asStateFlow()
 
-    private val _myProfilePicture: MutableStateFlow<String> = MutableStateFlow("")
-    val myProfilePicture = _myProfilePicture.asStateFlow()
-
-    private val _myUsername: MutableStateFlow<String> = MutableStateFlow("")
-    val myUsername = _myUsername.asStateFlow()
+    private val _myUser: MutableStateFlow<User?> = MutableStateFlow(null)
+    val myUser = _myUser.asStateFlow()
 
     private var updating = true
 
     init {
         viewModelScope.launch(Dispatchers.Default) {
             updating = true
+            getProfilePicture()
             feedRepository.updateFeed()
             updating = false
-            getProfilePicture()
         }
         viewModelScope.launch {
             feedRepository.getFeed().collect {
@@ -55,8 +53,11 @@ class HomeScreenViewModel @Inject constructor(
     private suspend fun getProfilePicture() {
         suspend { friendsService.me() }.handle(
             onSuccess = {
-                _myProfilePicture.value = it.data.profilePicture?.url ?: ""
-                _myUsername.value = it.data.username
+                _myUser.value = User(
+                    id = it.data.id,
+                    username = it.data.username,
+                    profilePicture = it.data.profilePicture,
+                )
             },
             loginService = loginService
         )

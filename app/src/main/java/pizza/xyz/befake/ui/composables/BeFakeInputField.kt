@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,7 +28,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,13 +47,15 @@ fun BeFakeInputField(
     placeholder: String,
     clearValueOnSubmit: Boolean = false,
     focus: Boolean?,
-    initialValue: String = ""
+    initialValue: String
 ) {
+
+    val textState = remember(initialValue) { mutableStateOf(TextFieldValue(initialValue)) }
 
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    var active by remember { mutableStateOf(focus ?: false) }
+    var active by remember(focus) { mutableStateOf(focus ?: false) }
 
     LaunchedEffect(active){
         if (active) {
@@ -60,10 +65,8 @@ fun BeFakeInputField(
         }
     }
 
-    var inputValue by remember { mutableStateOf(initialValue) }
-
-    LaunchedEffect(key1 = inputValue) {
-        onChange(inputValue)
+    LaunchedEffect(textState.value) {
+        onChange(textState.value.text)
     }
 
     Row(
@@ -85,7 +88,7 @@ fun BeFakeInputField(
                 if (leadingIcon != null) {
                     leadingIcon()
                 }
-                if (!active) {
+                if (!active && textState.value.text.isBlank()) {
                     Text(
                         text = placeholder,
                         color = Color.Gray,
@@ -99,19 +102,19 @@ fun BeFakeInputField(
                         modifier = Modifier
                             .focusRequester(focusRequester)
                             .padding(horizontal = 8.dp),
-                        value = inputValue,
-                        onValueChange = {
-                            inputValue = it
+                        value = textState.value,
+                        onValueChange = { newValue ->
+                            textState.value = newValue
                         },
                         singleLine = true,
                         cursorBrush = SolidColor(Color.White),
                         keyboardActions = KeyboardActions(
                             onDone = {
-                                onSubmit(inputValue)
+                                onSubmit(textState.value.text)
                                 focusManager.clearFocus(true)
                                 if (clearValueOnSubmit) {
                                     active = false
-                                    inputValue = ""
+                                    textState.value = TextFieldValue("")
                                 }
                             }
                         )
@@ -122,7 +125,7 @@ fun BeFakeInputField(
                 Box(
                     modifier = Modifier.clickable {
                         onTrailingIconClick()
-                        inputValue = ""
+                        textState.value = TextFieldValue("")
                         active = false
                     }
                 ) {
@@ -130,6 +133,13 @@ fun BeFakeInputField(
                 }
             }
         }
+    }
+
+    DisposableEffect(active) {
+        textState.value = textState.value.copy(
+            selection = TextRange(textState.value.text.length)
+        )
+        onDispose { }
     }
 }
 
@@ -147,6 +157,7 @@ fun BeFakeInputFieldPreview() {
         onSubmit = { },
         placeholder = "Phone Number",
         clearValueOnSubmit = false,
-        focus = true
+        focus = true,
+        initialValue = ""
     )
 }

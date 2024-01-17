@@ -38,6 +38,7 @@ import pizza.xyz.befake.model.dtos.feed.RealMojis
 import pizza.xyz.befake.model.dtos.feed.User
 import java.lang.reflect.Type
 import java.time.Instant
+import java.time.LocalDate
 import java.util.TimeZone
 
 object Utils {
@@ -68,14 +69,19 @@ object Utils {
         Toast.makeText(context, "Downloading to Downloads", Toast.LENGTH_SHORT).show()
     }
 
-    fun getTime(time: String, showSec: Boolean): String {
+    fun getTime(time: String, showSec: Boolean, context: Context): String {
         val date = Instant.parse(time)
         val localDate = date.atZone(TimeZone.getDefault().toZoneId()).toLocalDateTime()
+
+        val dayIdentifier = if (localDate.dayOfYear != LocalDate.now().dayOfYear) context.getString(
+            R.string.yesterday_at
+        ) else ""
+
         val hour = if (localDate.hour < 10) "0${localDate.hour}" else localDate.hour.toString()
         val minute = if (localDate.minute < 10) "0${localDate.minute}" else localDate.minute.toString()
-        if (!showSec) return "$hour:$minute"
+        if (!showSec) return "$dayIdentifier$hour:$minute"
         val second = if (localDate.second < 10) "0${localDate.second}" else localDate.second.toString()
-        return "$hour:$minute:$second"
+        return "$dayIdentifier$hour:$minute:$second"
     }
 
     fun getTimeLate(
@@ -97,6 +103,16 @@ object Utils {
             }
         }
     }
+
+    fun formatRealMojis(realMojis: List<RealMojis>, myUserId: String?): List<RealMojis> {
+        if (myUserId == null || !realMojis.any { it.user.id == myUserId }) return realMojis
+        val index = realMojis.indexOfFirst { it.user.id == myUserId }
+        val tempList = realMojis.toMutableList()
+        val removed = tempList.removeAt(index)
+        tempList.add(tempList.size, removed)
+        return tempList.reversed()
+    }
+
 
     @Composable
     fun debugPlaceholder(@DrawableRes id: Int) =

@@ -97,6 +97,21 @@ abstract class BeFakeModule {
 
         @Provides
         @Singleton
+        fun providePostAPI(okHttpClient: OkHttpClient): PostServiceImpl.PostAPI {
+            val gson: Gson = GsonBuilder().setLenient().create()
+
+            val retrofit: Retrofit =
+                Retrofit.Builder()
+                    .baseUrl(BASE_URL)
+                    .client(okHttpClient)
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    .build()
+
+            return retrofit.create(PostServiceImpl.PostAPI::class.java)
+        }
+
+        @Provides
+        @Singleton
         fun provideBeFakeDatabase(@ApplicationContext context: Context): BeFakeDatabase {
             return Room.databaseBuilder(
                 context,

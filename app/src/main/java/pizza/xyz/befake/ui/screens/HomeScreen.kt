@@ -54,12 +54,12 @@ fun HomeScreen(
 
     val feed by homeScreenViewModel.feed.collectAsStateWithLifecycle()
     val state by homeScreenViewModel.state.collectAsStateWithLifecycle()
-    val myProfilePicture by homeScreenViewModel.myProfilePicture.collectAsStateWithLifecycle()
+    val myUser by homeScreenViewModel.myUser.collectAsStateWithLifecycle()
 
     HomeScreenContent(
         feed = feed?.data,
         state = state,
-        myProfilePicture = myProfilePicture,
+        myUser = myUser,
         openDetailScreen = openDetailScreen,
     )
 }
@@ -68,7 +68,7 @@ fun HomeScreen(
 fun HomeScreenContent(
     feed: PostData?,
     state: HomeScreenState,
-    myProfilePicture: String,
+    myUser: User?,
     openDetailScreen: (String, Int, Boolean, Boolean) -> Unit
 ) {
 
@@ -93,8 +93,7 @@ fun HomeScreenContent(
                     Post(
                         post = feed?.friendsPosts?.get(it),
                         modifier = Modifier.padding(vertical = 8.dp),
-                        myProfilePicture = myProfilePicture,
-                        myUsername = feed?.userPosts?.user?.profilePicture?.url ?: "",
+                        myUser = myUser,
                         openDetailScreen = openDetailScreen
                     )
                 }
@@ -257,7 +256,16 @@ fun HomeScreenPreview() {
                 HomeScreenContent(
                     feed = feed.data.data,
                     state = HomeScreenState.Loaded,
-                    myProfilePicture = "https://picsum.photos/1000/1000",
+                    myUser = User(
+                        id = "1",
+                        username = "username",
+                        profilePicture = ProfilePicture(
+                            url = "https://picsum.photos/1000/1000",
+                            width = 500,
+                            height = 500
+                        )
+
+                    ),
                     openDetailScreen = {_, _, _, _ -> },
                 )
             }
@@ -291,7 +299,16 @@ fun HomeScreenLoadingPreview() {
                 HomeScreenContent(
                     feed = null,
                     state = HomeScreenState.Loading,
-                    myProfilePicture = "https://picsum.photos/1000/1000",
+                    myUser = User(
+                        id = "1",
+                        username = "username",
+                        profilePicture = ProfilePicture(
+                            url = "https://picsum.photos/1000/1000",
+                            width = 500,
+                            height = 500
+                        )
+
+                    ),
                     openDetailScreen = {_, _, _, _ ->},
                 )
             }
