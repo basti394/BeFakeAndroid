@@ -12,6 +12,7 @@ import javax.inject.Inject
 
 class TokenInterceptor @Inject constructor(
     private val context: Context,
+    private val loginService: LoginService
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -26,13 +27,30 @@ class TokenInterceptor @Inject constructor(
         }
 
         return if (token != null) {
-            chain.proceed(
+            val response = chain.proceed(
                 request.newBuilder()
                     .addHeader("token", token)
                     .build()
             )
+            if (response.code == 401) {
+                runBlocking {
+                    val tokenResponse = loginService.refreshToken()
+                    if (tokenResponse.isFailure) {
+                        loginService.logOut()
+                        return@runBlocking
+                    }
+                    chain.proceed(
+                        request.newBuilder()
+                            .addHeader("token", token)
+                            .build()
+                    )
+                }
+            }
+            response
         } else {
-            //loginScreenViewModel.onBackToPhoneNumberClicked()
+            runBlocking {
+                loginService.logOut()
+            }
             chain.proceed(request)
         }
     }

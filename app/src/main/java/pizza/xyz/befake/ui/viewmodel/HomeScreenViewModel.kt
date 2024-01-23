@@ -10,17 +10,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import pizza.xyz.befake.data.repository.FeedRepository
 import pizza.xyz.befake.data.service.FriendsService
-import pizza.xyz.befake.data.service.LoginService
 import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.model.entities.Post
-import pizza.xyz.befake.utils.Utils.handle
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val friendsService: FriendsService,
-    private val loginService: LoginService
 ) : ViewModel() {
 
     private val _feed: MutableStateFlow<Post?> = MutableStateFlow(null)
@@ -51,16 +48,13 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     private suspend fun getProfilePicture() {
-        suspend { friendsService.me() }.handle(
-            onSuccess = {
-                _myUser.value = User(
-                    id = it.data.id,
-                    username = it.data.username,
-                    profilePicture = it.data.profilePicture,
-                )
-            },
-            loginService = loginService
-        )
+        friendsService.me().onSuccess {
+            _myUser.value = User(
+                id = it.data.id,
+                username = it.data.username,
+                profilePicture = it.data.profilePicture,
+            )
+        }
     }
 }
 

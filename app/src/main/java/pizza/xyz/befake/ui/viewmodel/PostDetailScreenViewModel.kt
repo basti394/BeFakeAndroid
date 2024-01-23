@@ -8,17 +8,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import pizza.xyz.befake.data.repository.FeedRepository
-import pizza.xyz.befake.data.service.LoginService
 import pizza.xyz.befake.data.service.PostService
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
-import pizza.xyz.befake.utils.Utils.handle
 import javax.inject.Inject
 
 @HiltViewModel
 class PostDetailScreenViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val postService: PostService,
-    private val loginService: LoginService
 ) : ViewModel() {
 
     private var _post = MutableStateFlow<FriendsPosts?>(null)
@@ -33,12 +30,10 @@ class PostDetailScreenViewModel @Inject constructor(
     fun commentPost(postId: String, comment: String) {
         if (postId.isBlank() || comment.isBlank()) return
         viewModelScope.launch {
-            suspend { postService.comment(postId, comment) }.handle(
-                onSuccess = {
-                    getPost(post.value?.user?.username ?: "")
-                },
-                loginService = loginService
-            )
+            postService.comment(postId, comment).onSuccess {
+                feedRepository.updateFeed()
+                getPost(post.value?.user?.username ?: "")
+            }
         }
     }
 }
