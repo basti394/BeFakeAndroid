@@ -17,7 +17,6 @@ import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.model.dtos.login.LoginRequestDTO
 import pizza.xyz.befake.model.dtos.verify.VerifyOTPRequestDTO
 import pizza.xyz.befake.utils.Utils.getCountries
-import pizza.xyz.befake.utils.Utils.handle
 import java.util.Locale
 import javax.inject.Inject
 
@@ -54,22 +53,19 @@ class LoginScreenViewModel @Inject constructor(
         viewModelScope.launch {
             loginService.loginState.collect {
                 if (it is LoginState.LoggedIn) {
-                    suspend { friendsService.me() }.handle(
-                        onSuccess = {
-                            user.value = User(
-                                it.data.id,
-                                it.data.username,
-                                it.data.profilePicture?.let { pb ->
-                                    ProfilePicture(
-                                        pb.url,
-                                        pb.height,
-                                        pb.width
-                                    )
-                                },
-                            )
-                        },
-                        loginService = loginService
-                    )
+                    friendsService.me().onSuccess {
+                        user.value = User(
+                            it.data.id,
+                            it.data.username,
+                            it.data.profilePicture?.let { pb ->
+                                ProfilePicture(
+                                    pb.url,
+                                    pb.height,
+                                    pb.width
+                                )
+                            },
+                        )
+                    }
                 }
             }
         }

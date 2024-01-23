@@ -5,11 +5,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import pizza.xyz.befake.data.daos.PostDAO
 import pizza.xyz.befake.data.service.FriendsService
-import pizza.xyz.befake.data.service.LoginService
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
 import pizza.xyz.befake.model.dtos.feed.PostData
 import pizza.xyz.befake.model.entities.Post
-import pizza.xyz.befake.utils.Utils.handle
 import java.util.UUID
 import javax.inject.Inject
 
@@ -25,7 +23,6 @@ interface FeedRepository {
 class FeedRepositoryImpl @Inject constructor(
     private val postDAO: PostDAO,
     private val friendsService: FriendsService,
-    private val loginService: LoginService
 ) : FeedRepository {
 
     override fun getFeed(): Flow<Post> {
@@ -34,22 +31,18 @@ class FeedRepositoryImpl @Inject constructor(
 
     override suspend fun updateFeed() {
         val existingPost = postDAO.getPostData().first()
-
-        suspend { friendsService.feed() }.handle(
-            onSuccess = {
-                it.data.data?.let { data ->
-                    if (existingPost != null) {
-                        postDAO.updatePostData(formatFeed(data, existingPost.id))
-                        return@handle
-                    } else {
-                        val id = UUID.randomUUID()
-                        postDAO.insertPostData(formatFeed(data, id))
-                        return@handle
-                    }
+        friendsService.feed().onSuccess {
+            it.data.data?.let { data ->
+                if (existingPost != null) {
+                    postDAO.updatePostData(formatFeed(data, existingPost.id))
+                    return
+                } else {
+                    val id = UUID.randomUUID()
+                    postDAO.insertPostData(formatFeed(data, id))
+                    return
                 }
-            },
-            loginService = loginService
-        )
+            }
+        }
     }
 
     override fun getPostByUsername(username: String): Flow<FriendsPosts?> {
