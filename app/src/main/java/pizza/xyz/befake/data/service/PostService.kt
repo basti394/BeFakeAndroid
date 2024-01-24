@@ -10,6 +10,7 @@ import javax.inject.Singleton
 interface PostService {
 
     suspend fun comment(
+        userId: String,
         postId: String,
         comment: String
     ): Result<CommentResponseDTO>
@@ -21,14 +22,17 @@ class PostServiceImpl @Inject constructor(
 ): PostService {
 
     override suspend fun comment(
+        userId: String,
         postId: String,
         comment: String
     ) = runCatching {
         val commentRequestBody = CommentRequestDTO(
+            userId = userId,
             postId = postId,
             comment = comment
         )
-        return@runCatching postAPI.comment(commentRequestBody)
+        val res = postAPI.comment(commentRequestBody)
+        return@runCatching res
     }
 
     interface PostAPI {

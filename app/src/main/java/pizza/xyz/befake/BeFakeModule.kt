@@ -26,6 +26,7 @@ import pizza.xyz.befake.utils.Utils.BASE_URL
 import pizza.xyz.befake.utils.Utils.dataStore
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -67,7 +68,7 @@ abstract class BeFakeModule {
 
         @Provides
         @Singleton
-        fun provideLoginAPI(okHttpClient: OkHttpClient): LoginServiceImpl.LoginAPI {
+        fun provideLoginAPI(@Named("LoginClient") okHttpClient: OkHttpClient): LoginServiceImpl.LoginAPI {
             val gson: Gson = GsonBuilder().setLenient().create()
 
             val retrofit: Retrofit =
@@ -82,7 +83,7 @@ abstract class BeFakeModule {
 
         @Provides
         @Singleton
-        fun provideFriendsAPI(okHttpClient: OkHttpClient): FriendsServiceImpl.FriendsAPI {
+        fun provideFriendsAPI(@Named("ClientWithTI") okHttpClient: OkHttpClient): FriendsServiceImpl.FriendsAPI {
             val gson: Gson = GsonBuilder().setLenient().create()
 
             val retrofit: Retrofit =
@@ -97,7 +98,7 @@ abstract class BeFakeModule {
 
         @Provides
         @Singleton
-        fun providePostAPI(okHttpClient: OkHttpClient): PostServiceImpl.PostAPI {
+        fun providePostAPI(@Named("ClientWithTI") okHttpClient: OkHttpClient): PostServiceImpl.PostAPI {
             val gson: Gson = GsonBuilder().setLenient().create()
 
             val retrofit: Retrofit =
@@ -126,9 +127,18 @@ abstract class BeFakeModule {
 
         @Provides
         @Singleton
+        @Named("ClientWithTI")
         fun getOkHttp(tokenInterceptor: TokenInterceptor): OkHttpClient {
             return OkHttpClient.Builder()
                 .addInterceptor(tokenInterceptor)
+                .build()
+        }
+
+        @Provides
+        @Singleton
+        @Named("LoginClient")
+        fun getLoginOkHttpClient(): OkHttpClient {
+            return OkHttpClient.Builder()
                 .build()
         }
     }

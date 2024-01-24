@@ -25,7 +25,6 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import pizza.xyz.befake.R
-import pizza.xyz.befake.data.service.LoginService
 import pizza.xyz.befake.model.dtos.countrycode.Country
 import pizza.xyz.befake.model.dtos.feed.Comment
 import pizza.xyz.befake.model.dtos.feed.FriendsPosts
@@ -162,7 +161,7 @@ object Utils {
         }
     }
 
-    suspend fun <T> (suspend () -> Result<T>).handle(
+    /*suspend fun <T> (suspend () -> Result<T>).handle(
         onSuccess: (T) -> Unit,
         loginService: LoginService
     ) {
@@ -177,7 +176,7 @@ object Utils {
                 //loginService.logOut()
             }
         }
-    }
+    }*/
 
     @Composable
     fun debugPlaceholderPost(@DrawableRes id: Int) =
