@@ -3,6 +3,7 @@ package pizza.xyz.befake.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
@@ -27,12 +28,18 @@ class PostDetailScreenViewModel @Inject constructor(
         }
     }
 
-    fun commentPost(postId: String, comment: String) {
+    fun commentPost(userId: String, postId: String, comment: String) {
         if (postId.isBlank() || comment.isBlank()) return
-        viewModelScope.launch {
-            postService.comment(postId, comment).onSuccess {
+        viewModelScope.launch(Dispatchers.IO) {
+            postService.comment(
+                userId = userId,
+                postId = postId,
+                comment = comment
+            ).onSuccess {
                 feedRepository.updateFeed()
                 getPost(post.value?.user?.username ?: "")
+            }.onFailure {
+                println("Error: ${it.message}, ${it.stackTraceToString()}, ${it.cause}")
             }
         }
     }

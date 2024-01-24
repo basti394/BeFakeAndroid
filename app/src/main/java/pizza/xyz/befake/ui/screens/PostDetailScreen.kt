@@ -113,7 +113,7 @@ fun PostDetailScreen(
     }
 
     fun commentPost(comment: String) {
-        viewModel.commentPost(post?.posts?.get(current)?.id ?: "", comment)
+        viewModel.commentPost(post?.user?.id ?: "", post?.posts?.get(current)?.id ?: "", comment)
         viewModel.getPost(postUsername)
     }
 
@@ -556,53 +556,6 @@ fun ReactionDetail(
                 },
                 onClick = { Utils.download(realMoji?.media?.url ?: "", "${realMoji?.user?.username}'s reaction", context) }
             )
-        }
-    }
-}
-
-@Composable
-fun Comments(
-    comments: List<Comment>?,
-    userName: String?,
-    onClick: (String) -> Unit
-) {
-    if (comments.isNullOrEmpty()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Noch keine Kommentare",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = "Sei der Erste, der auf den Beitrag von $userName reagiert.",
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center
-            )
-        }
-    } else {
-        LazyColumn(
-            userScrollEnabled = false,
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Top
-        ) {
-            items(
-                count = comments.size,
-                key = { index -> comments[index].id }
-            ) { index ->
-                Comment(
-                    comment = comments[index],
-                    onClick = onClick
-                )
-            }
         }
     }
 }
