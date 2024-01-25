@@ -1,5 +1,7 @@
 package pizza.xyz.befake.ui.screens
 
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,12 +21,18 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.NearMe
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,13 +51,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -62,6 +76,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 import pizza.xyz.befake.R
 import pizza.xyz.befake.model.dtos.feed.Comment
 import pizza.xyz.befake.model.dtos.feed.Posts
@@ -69,10 +84,14 @@ import pizza.xyz.befake.model.dtos.feed.RealMojis
 import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.ui.composables.BeFakeInputField
 import pizza.xyz.befake.ui.composables.Dot
+import pizza.xyz.befake.ui.composables.PostImageState
+import pizza.xyz.befake.ui.composables.PostImagesV2
 import pizza.xyz.befake.ui.composables.ProfilePicture
 import pizza.xyz.befake.ui.viewmodel.PostDetailScreenViewModel
 import pizza.xyz.befake.utils.Utils
 import pizza.xyz.befake.utils.Utils.formatRealMojis
+import pizza.xyz.befake.utils.Utils.getLocation
+import pizza.xyz.befake.utils.Utils.isScrolledToTheTop
 import pizza.xyz.befake.utils.Utils.testFriendsPosts
 
 @Composable
@@ -123,6 +142,7 @@ fun PostDetailScreen(
         username = postUsername,
         takenAt = takenAt,
         posts = posts,
+        current = current,
         onBack = onBack,
         focusInput = focusInput,
         focusRealMojis = focusRealMojis,
@@ -139,12 +159,14 @@ private fun PostDetailScreenContent(
     username: String,
     takenAt: String?,
     posts: List<Posts>?,
+    current: Int,
     onBack: () -> Unit,
     focusInput: Boolean?,
     focusRealMojis: Boolean?,
     myUserId: String,
     commentPost: (String) -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     var showBottomSheet by remember {
         mutableStateOf(focusRealMojis ?: false)
@@ -164,6 +186,31 @@ private fun PostDetailScreenContent(
     }
 
     val context = LocalContext.current
+
+    var height by remember {
+        mutableStateOf(200)
+    }
+
+    val lazyListState = rememberLazyListState()
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (available.y < 0) {
+                    if (height > 200) {
+                        height -= 5
+                        return available
+                    }
+                } else {
+                    if (height < 450 && lazyListState.isScrolledToTheTop()) {
+                        height += 5
+                        return available
+                    }
+                }
+                return available.copy(x = 0f)
+            }
+        }
+    }
 
     Scaffold(
         containerColor = Color.Black,
@@ -271,11 +318,42 @@ private fun PostDetailScreenContent(
                 ) { if (focus) focus = false }
         ) {
             LazyColumn(
+                state = lazyListState,
                 modifier = Modifier
+                    .nestedScroll(nestedScrollConnection)
                     .padding(bottom = it.calculateBottomPadding())
             ) {
+                item(
+                    key = "spacer"
+                ) {
+                    Spacer(modifier = Modifier.height(1.dp))
+                }
                 item {
-                    Posts(posts) { _ -> /*TODO*/ }
+                    Spacer(modifier = Modifier.height(100.dp))
+                    Box(
+                        modifier = Modifier
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null
+                            ) {
+                                scope.launch {
+                                    animate(
+                                        initialValue = height.toFloat(),
+                                        targetValue = 450f,
+                                        animationSpec = tween(350)
+                                    ) { value, _ ->
+                                        height = value.toInt()
+                                    }
+                                }
+                            }
+                            .wrapContentSize()
+                    ) {
+                        Posts(
+                            posts,
+                            current,
+                            height
+                        ) { _ -> /*TODO*/ }
+                    }
                     SeparatorLine()
                     Reactions(
                         realMojis = reactions,
@@ -347,9 +425,119 @@ fun SeparatorLine(
 @Composable
 fun Posts(
     posts: List<Posts>?,
+    current: Int,
+    height: Int,
     onSwipe: (Int) -> Unit
 ) {
-    Box(modifier = Modifier.height(200.dp))
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    var locationName: String? by remember {
+        mutableStateOf("")
+    }
+    posts?.let {
+        LaunchedEffect(Unit) {
+            scope.launch { it[current].location?.let {
+                locationName = try {
+                    getLocation(it, context)
+                } catch (e: Exception) {
+                    null
+                }
+            } }
+        }
+
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PostImagesV2(
+                post = it[current],
+                showForeground = true,
+                changeShowForeground = {},
+                state = PostImageState.INTERACTABLE,
+                height = height
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PostInformation(
+                repostUsername = it[current].parentPostUsername,
+                location = locationName,
+                retakes = it[current].retakeCounter
+            )
+        }
+
+    } ?: Box(
+        modifier = Modifier
+            .height(height.dp)
+            .width((height * 0.75).dp)
+            .clip(RoundedCornerShape((height * 0.03).dp))
+            .background(Color.Gray, RoundedCornerShape((height * 0.03).dp)),
+    )
+}
+
+@Composable
+fun PostInformation(
+    repostUsername: String?,
+    location: String?,
+    retakes: Int?,
+) {
+    val map = mapOf(
+        repostUsername to Icons.Filled.Repeat,
+        location to Icons.Filled.NearMe,
+        retakes?.let { "$it Wiederholungen" } to Icons.Filled.Refresh
+    )
+
+
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        items(
+            count = map.size,
+            key = { index -> index }
+        ) {
+            val text = map.keys.toList()[it] ?: ""
+            val icon = map.values.toList()[it]
+            if (text.isBlank() || text.startsWith("0")) return@items
+            InformationChip(text = text, icon = icon)
+        }
+    }
+}
+
+@Composable
+fun InformationChip(
+    text: String,
+    icon: ImageVector
+) {
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(32.dp))
+            .background(Utils.lightBlack)
+            .wrapContentSize(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            modifier = Modifier
+                .padding(end = 2.dp, start = 12.dp, top = 5.dp, bottom = 5.dp)
+                .size(16.dp),
+            imageVector = icon,
+            contentDescription = text,
+            tint = Color.White,
+        )
+        Text(
+            modifier = Modifier.padding(start = 2.dp, end = 12.dp, top = 5.dp, bottom = 5.dp),
+            text = text,
+            color = Color.White,
+            maxLines = 1
+        )
+    }
 }
 
 @Composable
@@ -400,8 +588,16 @@ fun Reactions(
                         .width(10.dp)
                 )
             }
+            val nestedScrollConnection = remember {
+                object : NestedScrollConnection {
+                    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                        return available.copy(x = 0f)
+                    }
+                }
+            }
             LazyRow(
                 modifier = Modifier
+                    .nestedScroll(nestedScrollConnection)
                     .fillMaxSize(),
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
@@ -640,7 +836,8 @@ fun PostDetailScreenPreview() {
         focusInput = false,
         focusRealMojis = false,
         myUserId = testFriendsPosts.user.id,
-        commentPost = {}
+        commentPost = {},
+        current = 0,
     )
 }
 

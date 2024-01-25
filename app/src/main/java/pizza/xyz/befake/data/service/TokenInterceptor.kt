@@ -27,19 +27,20 @@ class TokenInterceptor @Inject constructor(
         }
 
         return if (token != null) {
-            val response = chain.proceed(
+            var response = chain.proceed(
                 request.newBuilder()
                     .addHeader("token", token)
                     .build()
             )
-            if (response.code == 401) {
+            if (response.code == 401 || response.code == 500) {
                 runBlocking {
+                    response.close()
                     val tokenResponse = loginService.refreshToken()
                     if (tokenResponse.isFailure) {
                         loginService.logOut()
                         return@runBlocking
                     }
-                    chain.proceed(
+                    response = chain.proceed(
                         request.newBuilder()
                             .addHeader("token", token)
                             .build()
