@@ -78,7 +78,6 @@ import pizza.xyz.befake.utils.Utils.testFeedUser
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-const val borderMargin = 50f
 const val cornerRadius = 16
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -156,7 +155,7 @@ fun Post(
             }
 
             LaunchedEffect(key1 = scrollChangeKey) {
-                if (post.posts.size == 1 || state.layoutInfo.visibleItemsInfo.isEmpty()) return@LaunchedEffect
+                if (post.posts.size == 1 || state.layoutInfo.visibleItemsInfo.isEmpty() || !state.isScrollInProgress ) return@LaunchedEffect
                 val itemList = listOf(
                     state.layoutInfo.visibleItemsInfo.first(),
                     state.layoutInfo.visibleItemsInfo.last()

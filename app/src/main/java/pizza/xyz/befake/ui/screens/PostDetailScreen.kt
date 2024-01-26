@@ -241,12 +241,12 @@ private fun PostDetailScreenContent(
                 if (dragAmount < 0) {
                     direction = -1
                     if (height > 200) {
-                        height -= 5
+                        height -= 3
                     }
                 } else {
                     direction = 1
                     if (height < 450 && lazyListState.isScrolledToTheTop()) {
-                        height += 5
+                        height += 3
                     }
                 }
             }
