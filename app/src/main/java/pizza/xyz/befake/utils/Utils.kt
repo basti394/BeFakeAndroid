@@ -2,6 +2,8 @@ package pizza.xyz.befake.utils
 
 import android.app.DownloadManager
 import android.content.Context
+import android.location.Address
+import android.location.Geocoder
 import android.net.Uri
 import android.os.Environment
 import android.webkit.CookieManager
@@ -12,6 +14,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -38,6 +41,7 @@ import pizza.xyz.befake.model.dtos.feed.User
 import java.lang.reflect.Type
 import java.time.Instant
 import java.time.LocalDate
+import java.util.Locale
 import java.util.TimeZone
 
 object Utils {
@@ -178,6 +182,25 @@ object Utils {
         }
     }*/
 
+    fun LazyListState.isScrolledToTheEnd() = layoutInfo.visibleItemsInfo.lastOrNull()?.index == layoutInfo.totalItemsCount - 1
+    fun LazyListState.isScrolledToTheTop() = this.layoutInfo.visibleItemsInfo.firstOrNull()?.key == "spacer"
+
+    fun getLocation(
+        location: Location,
+        context: Context
+    ): String? {
+
+        val geocoder = Geocoder(context, Locale.getDefault())
+        val addresses: List<Address>? = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+        val cityName: String? = addresses?.get(0)?.locality
+        val countryName: String? = addresses?.get(0)?.countryName
+
+        if (cityName != null && countryName != null) {
+            return "$cityName, $countryName"
+        }
+        return null
+    }
+
     @Composable
     fun debugPlaceholderPost(@DrawableRes id: Int) =
         if (LocalInspectionMode.current) {
@@ -241,7 +264,7 @@ object Utils {
             latitude = 52.5207,
             longitude = 13.3733
         ),
-        retakeCounter = 0,
+        retakeCounter = 5,
         isLate = true,
         isMain = true,
         realMojis = listOf(

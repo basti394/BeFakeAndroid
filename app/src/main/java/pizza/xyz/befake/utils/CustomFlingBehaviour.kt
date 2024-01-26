@@ -51,7 +51,7 @@ class CustomFlingBehaviour(
         return performFling(initialVelocity) {}
     }
 
-    suspend fun ScrollScope.performFling(
+    private suspend fun ScrollScope.performFling(
         initialVelocity: Float,
         onSettlingDistanceUpdated: (Float) -> Unit
     ): Float {
