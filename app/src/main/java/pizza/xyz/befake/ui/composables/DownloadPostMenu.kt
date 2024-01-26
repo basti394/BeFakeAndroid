@@ -69,7 +69,7 @@ fun DownloadPostMenu(
                 )
             }
         )
-        if (btsLink != null) {
+        if (!btsLink.isNullOrBlank()) {
             Divider(color = Color.DarkGray)
             DropdownMenuItem(
                 text = {

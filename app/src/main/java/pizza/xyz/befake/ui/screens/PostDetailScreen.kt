@@ -88,6 +88,7 @@ import pizza.xyz.befake.model.dtos.feed.RealMojis
 import pizza.xyz.befake.model.dtos.feed.User
 import pizza.xyz.befake.ui.composables.BeFakeInputField
 import pizza.xyz.befake.ui.composables.Dot
+import pizza.xyz.befake.ui.composables.DownloadPostMenu
 import pizza.xyz.befake.ui.composables.PostImageState
 import pizza.xyz.befake.ui.composables.PostImagesV2
 import pizza.xyz.befake.ui.composables.ProfilePicture
@@ -253,6 +254,8 @@ private fun PostDetailScreenContent(
         }
     }
 
+    var showDownloadMenu by remember { mutableStateOf(false) }
+
     Scaffold(
         containerColor = Color.Black,
         topBar = {
@@ -296,15 +299,30 @@ private fun PostDetailScreenContent(
                                 fontWeight = FontWeight.Normal
                             )
                         }
-                        IconButton(
-                            onClick = { /*TODO*/ }
+                        Box(
+                            modifier = Modifier
+                                .wrapContentSize(Alignment.TopStart)
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.MoreVert,
-                                contentDescription = "More",
-                                tint = Color.White
+                            IconButton(
+                                onClick = { showDownloadMenu = !showDownloadMenu },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.MoreVert,
+                                    contentDescription = "More",
+                                    tint = Color.White
+                                )
+                            }
+                            DownloadPostMenu(
+                                expanded = showDownloadMenu,
+                                userName = username,
+                                takenAt = posts?.get(current)?.takenAt ?: "",
+                                btsLink = posts?.get(current)?.btsMedia?.url,
+                                primaryLink = posts?.get(current)?.primary?.url ?: "",
+                                secondaryLink = posts?.get(current)?.secondary?.url ?: "",
+                                onDismissRequest = { showDownloadMenu = false },
                             )
                         }
+
                     }
                 },
                 colors = TopAppBarDefaults.mediumTopAppBarColors(containerColor = Color.Transparent)
