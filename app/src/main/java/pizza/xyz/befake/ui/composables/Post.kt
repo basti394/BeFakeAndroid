@@ -7,6 +7,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -73,7 +75,8 @@ import pizza.xyz.befake.utils.Utils.shimmerBrush
 import pizza.xyz.befake.utils.Utils.testFeedPostLateThreeMinLocationBerlin
 import pizza.xyz.befake.utils.Utils.testFeedPostNoLocation
 import pizza.xyz.befake.utils.Utils.testFeedUser
-import pizza.xyz.befake.utils.rememberCustomFlingBehaviour
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 const val borderMargin = 50f
 const val cornerRadius = 16
@@ -92,21 +95,9 @@ fun Post(
         state.scrollToItem(post?.posts?.size?.minus(1) ?: 0)
     }
 
-
     var current by remember {
         mutableIntStateOf(post?.posts?.size?.minus(1) ?: 0)
     }
-    
-    val flingBehavior = rememberCustomFlingBehaviour(
-        lazyListState = state,
-        onFling = { velocity ->
-            current = if (velocity < 0) {
-                (current - 1).coerceAtLeast(0)
-            } else {
-                (current + 1).coerceAtMost(post?.posts?.size?.minus(1) ?: 0)
-            }
-        }
-    )
 
     if (post == null) {
         Spacer(modifier = modifier.fillMaxSize())
@@ -158,11 +149,26 @@ fun Post(
                 parentUsername = parentUsername,
             )
 
+            val fling = rememberSnapFlingBehavior(lazyListState = state)
+
+            val scrollChangeKey by remember{
+                derivedStateOf { state.firstVisibleItemScrollOffset }
+            }
+
+            LaunchedEffect(key1 = scrollChangeKey) {
+                if (post.posts.size == 1 || state.layoutInfo.visibleItemsInfo.isEmpty()) return@LaunchedEffect
+                val itemList = listOf(
+                    state.layoutInfo.visibleItemsInfo.first(),
+                    state.layoutInfo.visibleItemsInfo.last()
+                )
+                current = itemList.minBy { sqrt(it.offset.toDouble().pow(2.0)) }.index
+            }
+
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth(),
                 state = state,
-                flingBehavior = flingBehavior,
+                flingBehavior = fling,
                 userScrollEnabled = post.posts.size > 1
             ) {
                 items(
