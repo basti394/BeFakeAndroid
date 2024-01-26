@@ -2,9 +2,11 @@ package pizza.xyz.befake.ui.screens
 
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +14,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -64,6 +65,9 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -93,6 +97,7 @@ import pizza.xyz.befake.utils.Utils.formatRealMojis
 import pizza.xyz.befake.utils.Utils.getLocation
 import pizza.xyz.befake.utils.Utils.isScrolledToTheTop
 import pizza.xyz.befake.utils.Utils.testFriendsPosts
+import kotlin.math.absoluteValue
 
 @Composable
 fun PostDetailScreen(
@@ -151,7 +156,7 @@ fun PostDetailScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun PostDetailScreenContent(
     comments: List<Comment>?,
@@ -188,26 +193,62 @@ private fun PostDetailScreenContent(
     val context = LocalContext.current
 
     var height by remember {
-        mutableStateOf(200)
+        mutableIntStateOf(200)
     }
 
     val lazyListState = rememberLazyListState()
 
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (available.y < 0) {
-                    if (height > 200) {
-                        height -= 5
-                        return available
-                    }
-                } else {
-                    if (height < 450 && lazyListState.isScrolledToTheTop()) {
-                        height += 5
-                        return available
+    val velocityTracker = VelocityTracker()
+
+    val pointerInput: suspend PointerInputScope.() -> Unit = {
+        var direction = 0
+        detectVerticalDragGestures(
+            onDragEnd = {
+                val velocity = velocityTracker.calculateVelocity()
+                val velocityY = velocity.y
+                if (velocityY.absoluteValue > 1000) {
+                    if (direction < 0) {
+                        if (height > 200) {
+                            scope.launch {
+                                animate(
+                                    initialValue = height.toFloat(),
+                                    targetValue = 200f,
+                                    animationSpec = tween(300)
+                                ) { value, _ ->
+                                    height = value.toInt()
+                                }
+                            }
+                        }
+                    } else {
+                        if (height < 450 && lazyListState.isScrolledToTheTop()) {
+                            scope.launch {
+                                animate(
+                                    initialValue = height.toFloat(),
+                                    targetValue = 450f,
+                                    animationSpec = tween(300)
+                                ) { value, _ ->
+                                    height = value.toInt()
+                                }
+                            }
+                        }
                     }
                 }
-                return available.copy(x = 0f)
+                velocityTracker.resetTracking()
+            }
+        ) { change, dragAmount ->
+            velocityTracker.addPosition(change.uptimeMillis, change.position)
+            if (!lazyListState.isScrollInProgress) {
+                if (dragAmount < 0) {
+                    direction = -1
+                    if (height > 200) {
+                        height -= 5
+                    }
+                } else {
+                    direction = 1
+                    if (height < 450 && lazyListState.isScrolledToTheTop()) {
+                        height += 5
+                    }
+                }
             }
         }
     }
@@ -311,16 +352,13 @@ private fun PostDetailScreenContent(
         val interactionSource = remember { MutableInteractionSource() }
         Box(
             modifier = Modifier
-                .fillMaxHeight()
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null
-                ) { if (focus) focus = false }
+                .fillMaxSize()
+                .pointerInput(Unit, pointerInput)
         ) {
             LazyColumn(
                 state = lazyListState,
+                //flingBehavior = customFlingBehaviour,
                 modifier = Modifier
-                    .nestedScroll(nestedScrollConnection)
                     .padding(bottom = it.calculateBottomPadding())
             ) {
                 item(
@@ -332,6 +370,8 @@ private fun PostDetailScreenContent(
                     Spacer(modifier = Modifier.height(100.dp))
                     Box(
                         modifier = Modifier
+                            .wrapContentSize()
+                            .pointerInput(Unit, pointerInput)
                             .clickable(
                                 interactionSource = interactionSource,
                                 indication = null
@@ -346,7 +386,7 @@ private fun PostDetailScreenContent(
                                     }
                                 }
                             }
-                            .wrapContentSize()
+
                     ) {
                         Posts(
                             posts,
@@ -356,6 +396,7 @@ private fun PostDetailScreenContent(
                     }
                     SeparatorLine()
                     Reactions(
+                        modifier = Modifier.pointerInput(Unit, pointerInput),
                         realMojis = reactions,
                         myUserId = myUserId,
                         onReactionClick = { index ->
@@ -371,6 +412,7 @@ private fun PostDetailScreenContent(
                     item {
                         Column(
                             modifier = Modifier
+                                .pointerInput(Unit, pointerInput)
                                 .fillMaxWidth()
                                 .padding(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -397,6 +439,7 @@ private fun PostDetailScreenContent(
                         key = { index -> comments[index].id }
                     ) { index ->
                         Comment(
+                            modifier = Modifier.pointerInput(Unit, pointerInput),
                             comment = comments[index],
                             onClick = {
                                 initialComment = "@${comments[index].user.username} "
@@ -542,13 +585,14 @@ fun InformationChip(
 
 @Composable
 fun Reactions(
+    modifier: Modifier = Modifier,
     realMojis: List<RealMojis>?,
     myUserId: String,
     onReactionClick: (Int) -> Unit
 ) {
     if (realMojis.isNullOrEmpty()) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -571,7 +615,7 @@ fun Reactions(
     } else {
         val containsMyRealMoji = realMojis.first().user.id == myUserId
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .height(150.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
@@ -758,13 +802,14 @@ fun ReactionDetail(
 
 @Composable
 fun Comment(
+    modifier: Modifier = Modifier,
     comment: Comment,
     onClick: (String) -> Unit
 ) {
     val context = LocalContext.current
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
             .clickable { onClick(comment.user.username) },
