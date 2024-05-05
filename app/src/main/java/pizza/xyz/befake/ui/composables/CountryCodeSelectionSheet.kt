@@ -1,17 +1,20 @@
 package pizza.xyz.befake.ui.composables
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -72,7 +75,7 @@ fun CountryCodeSelectionSheet(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CountryCodeSelectionSheetContent(
     countries: List<Country>,
@@ -81,6 +84,8 @@ fun CountryCodeSelectionSheetContent(
     onCountrySelected: (Country) -> Unit,
     onSearch: (String) -> Unit
 ) {
+
+    val groupedCountries = countries.groupBy { it.name.first().uppercaseChar() }
 
     Dialog(
         onDismissRequest = {
@@ -96,7 +101,6 @@ fun CountryCodeSelectionSheetContent(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .imePadding()
         ) {
             Column(
                 modifier = Modifier
@@ -147,26 +151,31 @@ fun CountryCodeSelectionSheetContent(
                         .fillMaxSize()
                         .background(Color.Black)
                 ) {
-                    items(
-                        count = countries.size,
-                        key = { it }
-                    ) { index ->
-                        val country = countries[index]
-                        val prevCountry = countries.getOrNull(index - 1)
-                        if (index == 0 || country.name.first() != prevCountry?.name?.first()) {
-                            Text(
-                                modifier = Modifier.padding(start = 16.dp, top = 16.dp),
-                                text = "${country.name.first()}.",
-                                style = textStyle(Color.White)
+
+                    groupedCountries.forEach { (letter, countriesInGroup) ->
+                        stickyHeader {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .background(Color.Black)
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    text = "$letter.",
+                                    style = textStyle(Color.White)
+                                )
+                            }
+                        }
+                        items(countriesInGroup) { country ->
+                            CountryCodeItem(
+                                modifier = Modifier
+                                    .padding(8.dp),
+                                country = country,
+                                selected = currentCountry.code == country.code,
+                                onCountrySelected = onCountrySelected
                             )
                         }
-                        CountryCodeItem(
-                            modifier = Modifier
-                                .padding(8.dp),
-                            country = countries[index],
-                            selected = currentCountry.code == countries[index].code,
-                            onCountrySelected = onCountrySelected
-                        )
                     }
                 }
             }

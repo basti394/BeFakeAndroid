@@ -91,7 +91,7 @@ class LoginScreenViewModel @Inject constructor(
         val phoneNumberWithCountry = "${country.value.dialCode}${phoneNumber.value}"
         viewModelScope.launch {
             loginService.sendCode(LoginRequestDTO(phoneNumberWithCountry)).onSuccess {
-                _otpSession.value = it.data?.otpSession ?: ""
+                _otpSession.value = it.data?.otpSession?.otpSession ?: ""
             }.onFailure {
                 if (it.message != "Invalid phone number") {
                     loginService.setLoginState(LoginState.Error(

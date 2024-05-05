@@ -2,7 +2,7 @@
     <string name="app_name">BeFake.</string>
     <string name="add_comment">Add comment...</string>
     <string name="phone_number_header">Let\'s get started. Whats your phone number?</string>
-    <string name="otp_code_header">Enter the code we just sent to your phone</string>
+    <string name="otp_code_header">Enter the code we just sent to your phone\n(%1$s)</string>
     <string name="login">Login</string>
     <string name="verify">Verify</string>
     <string name="try_again">Try Again</string>

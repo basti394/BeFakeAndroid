@@ -32,6 +32,7 @@ class HomeScreenViewModel @Inject constructor(
     private var updating = true
 
     init {
+        println("HomeScreenViewModel init")
         viewModelScope.launch(Dispatchers.Default) {
             updating = true
             getProfilePicture()

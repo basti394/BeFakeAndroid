@@ -9,6 +9,10 @@ data class LoginResultDTO(
 ) {
 
     data class Data(
-        @SerializedName("otpSession") val otpSession: String,
+        @SerializedName("otpSesion") val otpSession: OtpSession,
+    )
+
+    data class OtpSession(
+        @SerializedName("otpSesion") val otpSession: String,
     )
 }

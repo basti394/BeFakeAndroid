@@ -82,6 +82,8 @@ class LoginServiceImpl @Inject constructor(
             }
         }
         return@runCatching res.also { _loginState.value = LoginState.LoggedIn }
+    }.onFailure {
+        it.printStackTrace()
     }
 
     override suspend fun refreshToken(): Result<VerifyOTPResponseDTO> = runCatching {

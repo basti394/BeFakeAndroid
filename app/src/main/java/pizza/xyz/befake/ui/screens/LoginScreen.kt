@@ -1,9 +1,11 @@
 package pizza.xyz.befake.ui.screens
 
-import androidx.compose.foundation.Canvas
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -55,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import kotlinx.coroutines.delay
 import pizza.xyz.befake.R
 import pizza.xyz.befake.model.dtos.countrycode.Country
 import pizza.xyz.befake.ui.composables.CountryCodeSelectionSheet
@@ -79,7 +83,7 @@ fun LoginScreen(
 
     val headerText = when(loginState) {
         is LoginState.PhoneNumber -> stringResource(R.string.phone_number_header)
-        is LoginState.OTPCode -> stringResource(R.string.otp_code_header)
+        is LoginState.OTPCode -> stringResource(R.string.otp_code_header, "${currentCountry.dialCode} $phoneNumber")
         is LoginState.LoggedIn -> ""
         is LoginState.Loading -> {
             when ((loginState as LoginState.Loading).previousState) {
@@ -167,6 +171,14 @@ fun LoginScreenContent(
     onCountrySelected: (Country) -> Unit
 ) {
 
+    BackHandler(
+        loginState == LoginState.OTPCode ||
+                loginState is LoginState.Error &&
+                loginState.previousState is LoginState.OTPCode
+    ) {
+        onBackToPhoneNumberClicked()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -180,7 +192,7 @@ fun LoginScreenContent(
             style = TextStyle(
                 lineBreak = LineBreak.Simple,
                 color = if (loginState is LoginState.Error) Color.Red else Color.White,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.SemiBold,
                 fontSize = 15.sp
             )
         )
@@ -238,7 +250,7 @@ fun LoginScreenContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .border(
-                                width = 2.5.dp,
+                                width = 2.dp,
                                 color = Color.White,
                                 shape = RoundedCornerShape(cornerRadius)
                             )
@@ -436,6 +448,8 @@ fun OTPCodeInput(
         backgroundColor = Color.White,
     )
     val focusManager = LocalFocusManager.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
 
     LaunchedEffect(key1 = Unit) {
         focusRequester?.requestFocus()
@@ -449,7 +463,9 @@ fun OTPCodeInput(
             modifier = focusRequester?.let {
                 Modifier
                     .focusRequester(it)
+
             } ?: Modifier,
+            interactionSource = interactionSource,
             textStyle = textStyle(Color.White),
             value = value,
             onValueChange = {
@@ -469,26 +485,46 @@ fun OTPCodeInput(
                 keyboardType = KeyboardType.NumberPassword
             ),
             decorationBox = {
-                CodeInputDecoration(code = value)
+                CodeInputDecoration(code = value, isFocused)
             }
         )
     }
 }
 
 @Composable
-private fun CodeInputDecoration(code: String) {
+private fun CodeInputDecoration(
+    code: String, isFocused: Boolean
+) {
     Box(modifier = Modifier) {
         Row(horizontalArrangement = Arrangement.Center) {
             for (i in 0 until 6) {
+                val prevText = if (i > 0) (code.getOrNull(i - 1) ?: "").toString() else ""
                 val text = if (i < code.length) code[i].toString() else ""
-                CodeEntry(text)
+                val blink = isFocused && text.isBlank() && (prevText.isNotBlank() || i == 0)
+                CodeEntry(text, blink)
             }
         }
     }
 }
 
 @Composable
-private fun CodeEntry(text: String) {
+private fun CodeEntry(text: String, isFocused: Boolean) {
+
+    var blinkColor by remember {
+        mutableStateOf(Color.Gray)
+    }
+
+    LaunchedEffect(key1 = isFocused) {
+        if (isFocused) {
+            while (true) {
+                blinkColor = Color.White
+                delay(500)
+                blinkColor = Color.Gray
+                delay(500)
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .padding(4.dp)
@@ -498,15 +534,12 @@ private fun CodeEntry(text: String) {
     ) {
 
         if (text == "") {
-            Box {
-                Canvas(
-                    modifier = Modifier
-                        .size(10.dp),
-                    onDraw = {
-                        drawCircle(Color.Gray)
-                    }
-                )
-            }
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .size(10.dp)
+                    .background(blinkColor)
+            ) { }
         } else {
             Text(
                 modifier = Modifier.align(Alignment.Center),

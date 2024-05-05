@@ -155,7 +155,9 @@ fun MainContent(
                     postUsername = username,
                     selectedPost = selectedPost,
                     focusInput = focusInput,
-                    onBack = { navController.popBackStack() },
+                    onBack = {
+                        navController.popBackStack()
+                    },
                     focusRealMojis = focusRealMojis,
                     myUser = user
                 )
